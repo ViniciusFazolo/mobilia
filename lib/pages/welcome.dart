@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobilia/controller/welcome_controller.dart';
 
 class Welcome extends StatefulWidget {
   const Welcome({super.key});
@@ -8,6 +9,14 @@ class Welcome extends StatefulWidget {
 }
 
 class _WelcomeState extends State<Welcome> {
+  WelcomeController control = WelcomeController();
+
+  @override
+  void initState() {
+    super.initState();
+    control.startApplication(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
