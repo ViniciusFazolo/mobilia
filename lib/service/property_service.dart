@@ -15,7 +15,7 @@ class PropertyService extends CrudService {
     required String cidade,
     required String bairro,
     required String rua,
-    required String numero,
+    String? numero,
     String? complemento,
     List<File>? imagens,
   }) async {
@@ -30,7 +30,7 @@ class PropertyService extends CrudService {
     request.fields['cidade'] = cidade;
     request.fields['bairro'] = bairro;
     request.fields['rua'] = rua;
-    request.fields['numero'] = numero;
+    if (numero != null) request.fields['numero'] = numero;
     if (complemento != null) request.fields['complemento'] = complemento;
 
     // Adiciona imagens, se houver
