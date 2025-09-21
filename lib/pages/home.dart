@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobilia/pages/property.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -9,7 +10,11 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final List<Map<String, dynamic>> items = [
-    {"icon": Icons.apartment, "label": "Cadastrar Imóvel"},
+    {
+      "icon": Icons.apartment,
+      "label": "Cadastrar Imóvel",
+      "page": const Property(),
+    },
     {"icon": Icons.add_circle_outline, "label": "Cadastrar Unidade"},
     {"icon": Icons.person_add, "label": "Cadastrar Morador"},
     {"icon": Icons.search, "label": "Consultar Apartamentos"},
@@ -69,7 +74,14 @@ class _HomeState extends State<Home> {
                     return InkWell(
                       borderRadius: BorderRadius.circular(20),
                       onTap: () {
-                        debugPrint("Clicou em: ${item["label"]}");
+                        if (item["page"] != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => item["page"],
+                            ),
+                          );
+                        }
                       },
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
