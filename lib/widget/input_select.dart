@@ -32,6 +32,16 @@ class _InputSelectState<T> extends State<InputSelect<T>> {
   }
 
   @override
+  void didUpdateWidget(covariant InputSelect<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      setState(() {
+        _currentValue = widget.value;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
       value: _currentValue,
