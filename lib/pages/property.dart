@@ -30,6 +30,7 @@ class _PropertyState extends State<Property> {
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();
   final complementoController = TextEditingController();
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +119,7 @@ class _PropertyState extends State<Property> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _submitForm,
+              onPressed: isLoading ? null : _submitForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -127,7 +128,16 @@ class _PropertyState extends State<Property> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text("Salvar"),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text("Salvar"),
             ),
           ),
         ],
@@ -142,6 +152,10 @@ class _PropertyState extends State<Property> {
 
     final imagens = imagem != null ? [imagem!] : <File>[];
 
+    setState(() {
+      isLoading = true;
+    });
+
     final response = await service.createProperty(
       ativo: isActive,
       nome: nomeController.text,
@@ -154,6 +168,10 @@ class _PropertyState extends State<Property> {
       complemento: complementoController.text,
       imagens: imagens,
     );
+
+    setState(() {
+      isLoading = false;
+    });
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
