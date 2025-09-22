@@ -177,6 +177,22 @@ class _PropertyState extends State<Property> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Imóvel cadastrado com sucesso!")),
       );
+
+      _formKey.currentState!.reset();
+
+      nomeController.clear();
+      cepController.clear();
+      cidadeController.clear();
+      bairroController.clear();
+      ruaController.clear();
+      numeroController.clear();
+      complementoController.clear();
+
+      setState(() {
+        estadoSelecionado = null;
+        imagem = null;
+        isActive = true;
+      });
     } else {
       ScaffoldMessenger.of(
         context,
