@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 class InputImage extends StatefulWidget {
   final String? label;
-  final bool multiple; // nova flag
+  final bool multiple;
   final void Function(File?)? onChanged; // para single
   final void Function(List<File>)? onChangedMultiple; // para múltiplos
 

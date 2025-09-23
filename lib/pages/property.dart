@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/utils/estados.dart';
 import 'package:mobilia/utils/utils.dart';
-import 'package:mobilia/widget/form_layout.dart';
-import 'package:mobilia/widget/input.dart';
-import 'package:mobilia/widget/input_image.dart';
-import 'package:mobilia/widget/input_select.dart';
-import 'package:mobilia/widget/input_switch.dart';
+import 'package:mobilia/utils/widget/form_layout.dart';
+import 'package:mobilia/utils/widget/input.dart';
+import 'package:mobilia/utils/widget/input_image.dart';
+import 'package:mobilia/utils/widget/input_select.dart';
+import 'package:mobilia/utils/widget/input_switch.dart';
 
 class Property extends StatefulWidget {
   const Property({super.key});
