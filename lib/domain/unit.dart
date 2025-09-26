@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:mobilia/pages/property.dart';
 
 class Unit {
+  final int? id;
   final bool ativo;
   final bool cozinha;
   final bool areaServico;
@@ -21,6 +22,7 @@ class Unit {
   final Property imovel;
 
   Unit({
+    this.id,
     required this.ativo,
     required this.cozinha,
     required this.areaServico,
@@ -46,6 +48,7 @@ class Unit {
       'areaServico': areaServico.toString(),
       'valorAluguel': valorAluguel,
       'areaTotal': areaTotal,
+      if(id != null) 'id': id.toString(),
       if (bloco != null) 'bloco': bloco!,
       if (complemento != null) 'complemento': complemento!,
       'identificacao': identificacao,
@@ -68,6 +71,7 @@ class Unit {
       bloco: json['bloco'],
       complemento: json['complemento'],
       identificacao: json['identificacao'] ?? '',
+      id: json['id'],
       descricao: json['descricao'],
       qtdSala: json['qtdSala']?.toString(),
       qtdQuarto: json['qtdQuarto']?.toString(),
