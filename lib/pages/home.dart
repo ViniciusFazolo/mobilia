@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/pages/property.dart';
+import 'package:mobilia/pages/unit.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -15,7 +16,11 @@ class _HomeState extends State<Home> {
       "label": "Cadastrar Imóvel",
       "page": const Property(),
     },
-    {"icon": Icons.add_circle_outline, "label": "Cadastrar Unidade"},
+    {
+      "icon": Icons.add_circle_outline,
+      "label": "Cadastrar Unidade",
+      "page": const Unit(),
+    },
     {"icon": Icons.person_add, "label": "Cadastrar Morador"},
     {"icon": Icons.search, "label": "Consultar Apartamentos"},
     {"icon": Icons.attach_money, "label": "Aluguéis a vencer"},
