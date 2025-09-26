@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class Input extends StatefulWidget {
   final String? label;
@@ -8,6 +9,7 @@ class Input extends StatefulWidget {
   final TextEditingController? controller;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
   final void Function(String)? onChanged;
   final void Function(bool)? onFocusChange;
 
@@ -22,6 +24,7 @@ class Input extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.onFocusChange,
+    this.inputFormatters,
   });
 
   @override
@@ -67,6 +70,7 @@ class _InputState extends State<Input> {
       keyboardType: widget.keyboardType,
       obscureText: widget.obscureText,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      inputFormatters: widget.inputFormatters,
       validator: (value) {
         _errorText = _validate(value);
         return _errorText;
