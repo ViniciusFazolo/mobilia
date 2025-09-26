@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/controller/resident_controller.dart';
+import 'package:mobilia/utils/textInputFormatter.dart';
 import 'package:mobilia/utils/widget/form_layout.dart';
 import 'package:mobilia/utils/widget/input.dart';
 import 'package:mobilia/utils/widget/input_date.dart';
@@ -51,13 +52,43 @@ class _ResidentState extends State<Resident> {
           Input(
             label: "Telefone",
             controller: residentController.telefoneController,
+            inputFormatters: [telefoneMask],
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (!telefoneMask.isFill()) {
+                return "Telefone incompleto";
+              }
+              return null;
+            },
           ),
           Input(label: "RG", controller: residentController.rgController),
-          Input(label: "CPF", controller: residentController.cpfController),
-          InputDate(label: "Data de nascimento", controller: residentController.dtNascimentoController,),
-          InputDate(label: "Data inicial", controller: residentController.dtInicioController,),
-          InputDate(label: "Data final", controller: residentController.dtFimController,),
-          InputDate(label: "Data de vencimento do aluguel", controller: residentController.dtVencimentoController,),
+          Input(
+            label: "CPF",
+            controller: residentController.cpfController,
+            inputFormatters: [cpfMask],
+            validator: (value) {
+              if (!cpfMask.isFill()) {
+                return "CPF incompleto";
+              }
+              return null;
+            },
+          ),
+          InputDate(
+            label: "Data de nascimento",
+            controller: residentController.dtNascimentoController,
+          ),
+          InputDate(
+            label: "Data inicial",
+            controller: residentController.dtInicioController,
+          ),
+          InputDate(
+            label: "Data final",
+            controller: residentController.dtFimController,
+          ),
+          InputDate(
+            label: "Data de vencimento do aluguel",
+            controller: residentController.dtVencimentoController,
+          ),
           InputSelect(
             items: residentController.properties
                 .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nome)))
@@ -69,7 +100,12 @@ class _ResidentState extends State<Resident> {
           ),
           InputSelect(
             items: residentController.units
-                .map((e) => DropdownMenuItem(value: e.id, child: Text(e.identificacao)))
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e.id,
+                    child: Text(e.identificacao),
+                  ),
+                )
                 .toList(),
             label: "Em qual unidade esse imóvel está?",
             onChanged: (value) {
