@@ -142,11 +142,10 @@ class _UnitState extends State<Unit> {
           InputImage(
             label: "Imagens do imóvel",
             multiple: true,
-            onChanged: (file) {
+            onChangedMultiple: (files) {
               setState(() {
-                if (file != null) {
-                  unitController.imagens.add(file);
-                }
+                debugPrint(files.map((f) => f.path).join(', '));
+                unitController.imagens = files;
               });
             },
           ),
