@@ -120,9 +120,6 @@ class UnitController {
     isActive = true;
     cozinha = true;
     areaServico = true;
-    imagens = [];
-    imovelSelecionado = -1;
-    statusSelecionado = "";
 
     refresh();
   }
