@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mobilia/pages/property.dart';
+import 'package:mobilia/domain/property.dart';
 
 class Unit {
   final int? id;
@@ -19,7 +19,7 @@ class Unit {
   final String? qtdSuite;
   final String? qtdGaragem;
   final List<File> imagens;
-  final Property imovel;
+  final Property? imovel;
 
   Unit({
     this.id,
@@ -79,7 +79,7 @@ class Unit {
       qtdSuite: json['qtdSuite']?.toString(),
       qtdGaragem: json['qtdGaragem']?.toString(),
       imagens: [], // imagens não vêm direto do JSON
-      imovel: json['imovel'],
+      imovel: json['imovel'] != null ? Property.fromJson(json['imovel']) : null,
     );
   }
 }
