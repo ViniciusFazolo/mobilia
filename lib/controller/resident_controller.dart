@@ -27,7 +27,6 @@ class ResidentController {
   final telefoneController = TextEditingController();
 
   // campos data
-  final dtNascimentoController = TextEditingController();
   final dtFimController = TextEditingController();
   final dtInicioController = TextEditingController();
   final dtVencimentoController = TextEditingController();
@@ -51,7 +50,6 @@ class ResidentController {
       'telefone': telefoneController.text,
       'cpf': cpfController.text,
       'rg': rgController.text,
-      'dtNascimento': formatDateToIso(dtNascimentoController.text),
       'dtVencimento': formatDateToIso(dtVencimentoController.text),
       'dtInicio': formatDateToIso(dtInicioController.text),
       'dtFim': formatDateToIso(dtFimController.text),
@@ -123,7 +121,6 @@ class ResidentController {
     nomeController.clear();
     rgController.clear();
     telefoneController.clear();
-    dtNascimentoController.clear();
     dtFimController.clear();
     dtInicioController.clear();
     dtVencimentoController.clear();

@@ -74,10 +74,6 @@ class _ResidentState extends State<Resident> {
             },
           ),
           InputDate(
-            label: "Data de nascimento",
-            controller: residentController.dtNascimentoController,
-          ),
-          InputDate(
             label: "Data inicial",
             controller: residentController.dtInicioController,
           ),
