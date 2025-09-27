@@ -8,7 +8,6 @@ class Morador {
   final String telefone;
   final String cpf;
   final String rg;
-  final DateTime? dtNascimento;
   final bool ativo;
   final DateTime? dtVencimento;
   final DateTime? dtInicio;
@@ -28,7 +27,6 @@ class Morador {
     required this.telefone,
     required this.cpf,
     required this.rg,
-    this.dtNascimento,
     this.ativo = true,
     this.dtVencimento,
     this.dtInicio,
@@ -48,9 +46,6 @@ class Morador {
       telefone: json['telefone'] ?? '',
       cpf: json['cpf'] ?? '',
       rg: json['rg'] ?? '',
-      dtNascimento: json['dtNascimento'] != null
-          ? DateTime.parse(json['dtNascimento'])
-          : null,
       ativo: json['ativo'] ?? true,
       dtVencimento: json['dtVencimento'] != null
           ? DateTime.parse(json['dtVencimento'])
@@ -75,7 +70,6 @@ class Morador {
       'telefone': telefone,
       'cpf': cpf,
       'rg': rg,
-      'dtNascimento': dtNascimento?.toIso8601String(),
       'ativo': ativo,
       'dtVencimento': dtVencimento?.toIso8601String(),
       'dtInicio': dtInicio?.toIso8601String(),
