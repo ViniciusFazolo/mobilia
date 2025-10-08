@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobilia/pages/contract.dart';
 import 'package:mobilia/pages/property.dart';
 import 'package:mobilia/pages/resident.dart';
 import 'package:mobilia/pages/unit.dart';
@@ -26,6 +27,11 @@ class _HomeState extends State<Home> {
       "icon": Icons.person_add,
       "label": "Cadastrar Morador",
       "page": const Resident(),
+    },
+    {
+      "icon": Icons.upload_file,
+      "label": "Cadastrar Contrato",
+      "page": const Contract(),
     },
     {"icon": Icons.search, "label": "Consultar Apartamentos"},
     {"icon": Icons.attach_money, "label": "Aluguéis a vencer"},
