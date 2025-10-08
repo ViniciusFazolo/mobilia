@@ -27,10 +27,12 @@ class LoginController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+        final id = data['id'];
         final usuario = data['usuario'];
         final userRole = data['UserRole'];
         final token = data['token'];
 
+        Prefs.setInt("id", id);
         Prefs.setString("usuario", usuario);
         Prefs.setString("userRole", userRole.toString());
         Prefs.setString("token", token);
