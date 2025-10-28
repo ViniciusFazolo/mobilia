@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/pages/contract.dart';
+import 'package:mobilia/pages/contract_search.dart';
 import 'package:mobilia/pages/property.dart';
 import 'package:mobilia/pages/resident.dart';
 import 'package:mobilia/pages/unit.dart';
@@ -33,7 +34,11 @@ class _HomeState extends State<Home> {
       "label": "Cadastrar Contrato",
       "page": const Contract(),
     },
-    {"icon": Icons.search, "label": "Consultar Apartamentos"},
+    {
+      "icon": Icons.search,
+      "label": "Consultar Contratos",
+      "page": const ContractSearch(),
+    },
     {"icon": Icons.attach_money, "label": "Aluguéis a vencer"},
     {"icon": Icons.receipt, "label": "Enviar boleto"},
     {"icon": Icons.request_quote, "label": "Reajustar aluguel"},
