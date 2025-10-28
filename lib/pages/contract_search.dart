@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobilia/controller/contract_search_controller.dart';
 import 'package:mobilia/domain/contract.dart';
 import 'package:mobilia/domain/resident.dart';
+import 'package:mobilia/pages/contract_pdf_view.dart';
 import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:intl/intl.dart';
 
@@ -45,7 +46,24 @@ class _ContractSearchState extends State<ContractSearch> {
     });
   }
 
-  void _showContractDetails(Contrato contrato) {}
+  void _showContractDetails(Contrato contrato) {
+    if (contrato.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID do contrato não disponível'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ContractPdfView(contrato: contrato),
+      ),
+    );
+  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
