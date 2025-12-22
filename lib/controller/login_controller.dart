@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:mobilia/pages/home.dart';
 import 'package:mobilia/utils/prefs.dart';
 
 class LoginController {
@@ -46,10 +45,7 @@ class LoginController {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Login efetuado com sucesso")),
           );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Home()),
-          );
+          Navigator.pushReplacementNamed(context, '/dashboard');
         }
       } else {
         if (context.mounted) {

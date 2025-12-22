@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/pages/welcome.dart';
+import 'package:mobilia/pages/dashboard.dart';
+import 'package:mobilia/pages/properties_page.dart';
+import 'package:mobilia/pages/units_page.dart';
+import 'package:mobilia/pages/residents_page.dart';
+import 'package:mobilia/pages/contracts_page.dart';
+import 'package:mobilia/pages/parcels_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
@@ -14,9 +20,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Mobília',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
+        useMaterial3: true,
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -27,7 +34,16 @@ class MyApp extends StatelessWidget {
         Locale('pt', 'BR'),
         Locale('en', 'US'),
       ],
-      home: const Welcome()
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const Welcome(),
+        '/dashboard': (context) => const Dashboard(),
+        '/properties': (context) => const PropertiesPage(),
+        '/units': (context) => const UnitsPage(),
+        '/residents': (context) => const ResidentsPage(),
+        '/contracts': (context) => const ContractsPage(),
+        '/parcels': (context) => const ParcelsPage(),
+      },
     );
   }
 }

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobilia/pages/home.dart';
 import 'package:mobilia/pages/login.dart';
 
 class WelcomeController {
@@ -26,10 +25,7 @@ class WelcomeController {
       );
 
       if (response.statusCode == 200) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-        );
+        Navigator.pushReplacementNamed(context, '/dashboard');
       } else {
         Navigator.pushReplacement(
           context,

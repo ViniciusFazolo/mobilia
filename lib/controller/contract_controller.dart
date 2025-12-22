@@ -5,7 +5,6 @@ import 'package:mobilia/domain/property.dart';
 import 'package:mobilia/domain/resident.dart';
 import 'package:mobilia/domain/unit.dart';
 import 'package:mobilia/domain/user.dart';
-import 'package:mobilia/pages/home.dart';
 import 'package:mobilia/service/contract_service.dart';
 import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/service/resident_service.dart';
@@ -86,10 +85,7 @@ class ContractController {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Contrato criado com sucesso")),
           );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Home()),
-          );
+          Navigator.pop(context, true); // Retorna para a página anterior
         }
         clearForm();
       } else {
