@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/controller/contract_controller.dart';
-import 'package:mobilia/utils/estados.dart';
 import 'package:mobilia/utils/textInputFormatter.dart';
-import 'package:mobilia/utils/utils.dart';
 import 'package:mobilia/utils/widget/form_layout.dart';
 import 'package:mobilia/utils/widget/input.dart';
 import 'package:mobilia/utils/widget/input_date.dart';
@@ -17,14 +15,20 @@ class Contract extends StatefulWidget {
 
 class _ContractState extends State<Contract> {
   ContractController controller = ContractController();
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    controller.fetchUsers();
-    controller.fetchResident();
-    controller.fetchUnit();
-    controller.fetchProperty();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await controller.fetchUsers();
+    await controller.fetchResident();
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -33,61 +37,15 @@ class _ContractState extends State<Contract> {
   }
 
   content() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Form(
       key: controller.formKey,
       child: Column(
         spacing: 10,
         children: [
-          Input(
-            label: "CEP",
-            controller: controller.cepController,
-            onFocusChange: (focus) async {
-              if (!focus) {
-                if (controller.cepController.text.isNotEmpty) {
-                  final resultado = await findCep(
-                    controller.cepController.text,
-                  );
-                  if (resultado != null) {
-                    setState(() {
-                      controller.cidadeController.text = resultado['cidade']!;
-                      controller.bairroController.text = resultado['bairro']!;
-                      controller.ruaController.text = resultado['rua']!;
-                      controller.estadoSelecionado = resultado['estado']!;
-                    });
-                  }
-                }
-              }
-            },
-          ),
-          Input(label: "Rua", controller: controller.ruaController),
-          InputSelect<String>(
-            label: "Estado",
-            value: controller.estadoSelecionado,
-            items: estados
-                .map(
-                  (e) => DropdownMenuItem(
-                    value: e["sigla"],
-                    child: Text(e["nome"]!),
-                  ),
-                )
-                .toList(),
-            onChanged: (val) {
-              setState(() {
-                controller.estadoSelecionado = val;
-              });
-            },
-            validator: (val) {
-              if (val == null) return "Campo obrigatório";
-              return null;
-            },
-          ),
-          Input(label: "Cidade", controller: controller.cidadeController),
-          Input(label: "Bairro", controller: controller.bairroController),
-          Input(
-            label: "Número",
-            controller: controller.numeroController,
-            requiredField: false,
-          ),
           InputDate(
             label: "Data de inicio",
             controller: controller.dtInicioController,
@@ -100,10 +58,11 @@ class _ContractState extends State<Contract> {
             label: "Data de vencimento",
             controller: controller.dtVencimentoController,
           ),
-          InputSelect(
+          InputSelect<String>(
+            value: controller.tipoLocacaoSelecionado,
             items: controller.tipoLocacao
                 .map(
-                  (e) => DropdownMenuItem(
+                  (e) => DropdownMenuItem<String>(
                     value: e["value"],
                     child: Text(e["label"]!),
                   ),
@@ -111,14 +70,11 @@ class _ContractState extends State<Contract> {
                 .toList(),
             label: "Tipo de locação",
             onChanged: (value) {
-              controller.tipoLocacaoSelecionado = value!;
+              setState(() {
+                controller.tipoLocacaoSelecionado = value;
+              });
             },
-          ),
-          Input(
-            label: "Valor do aluguel",
-            keyboardType: TextInputType.number,
-            inputFormatters: [onlyDigitsWithDecimal],
-            controller: controller.valorAluguelController,
+            validator: null,
           ),
           Input(
             label: "Valor do depósito",
@@ -126,37 +82,23 @@ class _ContractState extends State<Contract> {
             inputFormatters: [onlyDigitsWithDecimal],
             controller: controller.valorDepositoController,
           ),
-          InputSelect(
-            items: controller.properties
-                .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nome)))
-                .toList(),
-            label: "Imóvel",
-            onChanged: (value) {
-              controller.imovelSelecionado = value!;
-            },
-          ),
-          InputSelect(
-            items: controller.units
-                .map(
-                  (e) => DropdownMenuItem(
-                    value: e.id,
-                    child: Text(e.identificacao),
-                  ),
-                )
-                .toList(),
-            label: "Unidade",
-            onChanged: (value) {
-              controller.unidadeSelecionado = value!;
-            },
-          ),
-          InputSelect(
-            items: controller.residents
-                .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nome)))
-                .toList(),
+          InputSelect<int>(
+            key: ValueKey('morador_${controller.residents.length}'),
+            value: controller.residenteSelecionado != 0 ? controller.residenteSelecionado : null,
+            items: controller.residents.isEmpty
+                ? [const DropdownMenuItem<int>(value: null, child: Text("Nenhum morador cadastrado"))]
+                : controller.residents
+                    .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.nome)))
+                    .toList(),
             label: "Morador",
-            onChanged: (value) {
-              controller.residenteSelecionado = value!;
-            },
+            onChanged: controller.residents.isEmpty
+                ? null
+                : (value) {
+                    setState(() {
+                      controller.residenteSelecionado = value ?? 0;
+                    });
+                  },
+            validator: null,
           ),
           SizedBox(
             width: double.infinity,

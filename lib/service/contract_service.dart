@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mobilia/service/crud_service.dart';
+import 'package:mobilia/utils/prefs.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobilia/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,7 +16,15 @@ class ContractService extends CrudService {
     try {
       final url = Uri.parse('$apiBaseUrl/contrato/$contratoId/view');
 
-      final headers = {'Accept': 'application/pdf', ...?defaultHeaders};
+      final token = await Prefs.getString("token");
+      final headers = <String, String>{
+        'Accept': 'application/pdf',
+        ...?defaultHeaders,
+      };
+      
+      if (token.isNotEmpty) {
+        headers["Authorization"] = "Bearer $token";
+      }
 
       final response = await http.get(url, headers: headers);
 
@@ -69,7 +78,15 @@ class ContractService extends CrudService {
 
       final url = Uri.parse('$apiBaseUrl/contrato/$contratoId/download');
 
-      final headers = {'Accept': 'application/pdf', ...?defaultHeaders};
+      final token = await Prefs.getString("token");
+      final headers = <String, String>{
+        'Accept': 'application/pdf',
+        ...?defaultHeaders,
+      };
+      
+      if (token.isNotEmpty) {
+        headers["Authorization"] = "Bearer $token";
+      }
 
       final response = await http.get(url, headers: headers);
 
@@ -153,7 +170,14 @@ class ContractService extends CrudService {
     try {
       final url = Uri.parse('$apiBaseUrl/contrato/$contratoId/view');
 
-      final headers = {...?defaultHeaders};
+      final token = await Prefs.getString("token");
+      final headers = <String, String>{
+        ...?defaultHeaders,
+      };
+      
+      if (token.isNotEmpty) {
+        headers["Authorization"] = "Bearer $token";
+      }
 
       final response = await http.head(url, headers: headers);
 

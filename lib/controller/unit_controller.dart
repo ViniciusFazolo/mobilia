@@ -119,10 +119,7 @@ class UnitController {
                 : "Unidade cadastrada com sucesso!"),
           ),
         );
-        // Só reseta o formulário se não estiver editando
-        if (editingId == null) {
-          _resetForm(refresh);
-        }
+        // Não reseta mais o formulário, pois vamos voltar para a listagem
         return true;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -233,29 +230,4 @@ class UnitController {
     refresh();
   }
 
-  void _resetForm(VoidCallback refresh) {
-    formKey.currentState?.reset();
-    valorAluguelController.clear();
-    areaTotalController.clear();
-    blocoController.clear();
-    complementoController.clear();
-    identificacaoController.clear();
-    descricaoController.clear();
-    numeroController.clear();
-    qtdSalaController.clear();
-    qtdQuartoController.clear();
-    qtdBanheiroController.clear();
-    qtdSuiteController.clear();
-    qtdGaragemController.clear();
-
-    isActive = true;
-    cozinha = true;
-    areaServico = true;
-    editingId = null;
-    imovelSelecionado = 0;
-    statusSelecionado = '';
-    imagens = [];
-
-    refresh();
-  }
 }

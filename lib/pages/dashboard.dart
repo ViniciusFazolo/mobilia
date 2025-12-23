@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobilia/pages/login.dart';
+import 'package:mobilia/utils/prefs.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -90,7 +92,7 @@ class _DashboardState extends State<Dashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Bem-vindo ao Mobília",
+                      "Bem-vindo ao Aluguei",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -271,7 +273,7 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  "Mobília",
+                  "Aluguei",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -346,9 +348,59 @@ class _DashboardState extends State<Dashboard> {
               Navigator.pushNamed(context, '/parcels');
             },
           ),
+          const Divider(),
+          _buildDrawerItem(
+            context,
+            icon: Icons.person,
+            title: "Meu Perfil",
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          _buildDrawerItem(
+            context,
+            icon: Icons.logout,
+            title: "Sair",
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout(context);
+            },
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmar Logout"),
+        content: const Text("Deseja realmente sair?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sair"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await Prefs.clear();
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const Login()),
+          (route) => false,
+        );
+      }
+    }
   }
 
   Widget _buildDrawerItem(

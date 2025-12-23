@@ -16,17 +16,10 @@ import 'package:mobilia/utils/utils.dart';
 
 class ContractController {
   final formKey = GlobalKey<FormState>();
-  final cepController = TextEditingController();
-  final ruaController = TextEditingController();
-  final cidadeController = TextEditingController();
-  final bairroController = TextEditingController();
-  final numeroController = TextEditingController();
   final dtInicioController = TextEditingController();
   final dtFimController = TextEditingController();
   final dtVencimentoController = TextEditingController();
-  final valorAluguelController = TextEditingController();
   final valorDepositoController = TextEditingController();
-  String? estadoSelecionado;
   String? tipoLocacaoSelecionado;
   int imovelSelecionado = 0;
   int unidadeSelecionado = 0;
@@ -61,20 +54,10 @@ class ContractController {
         'dataVencimento': dtVencimentoController.text.isNotEmpty
             ? formatDateToIso(dtVencimentoController.text)
             : null,
-        'valorAluguel': double.tryParse(valorAluguelController.text),
         'valorDeposito': double.tryParse(valorDepositoController.text),
         'objLocacao': tipoLocacaoSelecionado,
-        'endereco': ruaController.text,
-        'cidade': cidadeController.text,
-        'estado': estadoSelecionado,
-        'cep': cepController.text,
-        'bairro': bairroController.text,
-        'rua': ruaController.text,
-        'numero': int.tryParse(numeroController.text),
         'user': userId,
         'morador': residenteSelecionado,
-        'unidade': unidadeSelecionado,
-        'imovel': imovelSelecionado,
       };
 
       final service = ContractService(baseUrl: apiBaseUrl);
@@ -107,17 +90,10 @@ class ContractController {
   }
 
   void clearForm() {
-    cepController.clear();
-    ruaController.clear();
-    cidadeController.clear();
-    bairroController.clear();
-    numeroController.clear();
     dtInicioController.clear();
     dtFimController.clear();
     dtVencimentoController.clear();
-    valorAluguelController.clear();
     valorDepositoController.clear();
-    estadoSelecionado = null;
     tipoLocacaoSelecionado = null;
     imovelSelecionado = 0;
     unidadeSelecionado = 0;
@@ -125,35 +101,77 @@ class ContractController {
   }
 
   fetchUsers() async {
-    final service = UserService(baseUrl: apiBaseUrl);
-
-    final res = await service.get("user");
-
-    final List<dynamic> data = jsonDecode(res.body);
-    users = data.map((e) => User.fromJson(e)).toList();
+    try {
+      final service = UserService(baseUrl: apiBaseUrl);
+      final res = await service.get("user");
+      
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        users = data.map((e) => User.fromJson(e)).toList();
+      } else {
+        debugPrint("Erro ao buscar usuários: ${res.statusCode}");
+        users = [];
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar usuários: $e");
+      users = [];
+    }
   }
 
   fetchResident() async {
-    final service = ResidentService(baseUrl: apiBaseUrl);
-
-    final res = await service.get("morador");
-    final List<dynamic> data = jsonDecode(res.body);
-    residents = data.map((e) => Morador.fromJson(e)).toList();
+    try {
+      final service = ResidentService(baseUrl: apiBaseUrl);
+      final res = await service.get("morador");
+      
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        residents = data.map((e) => Morador.fromJson(e)).toList();
+        debugPrint("Moradores carregados: ${residents.length}");
+      } else {
+        debugPrint("Erro ao buscar moradores: ${res.statusCode}");
+        residents = [];
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar moradores: $e");
+      residents = [];
+    }
   }
 
   fetchUnit() async {
-    final service = UnitService(baseUrl: apiBaseUrl);
-
-    final res = await service.get("unidade");
-    final List<dynamic> data = jsonDecode(res.body);
-    units = data.map((e) => Unit.fromJson(e)).toList();
+    try {
+      final service = UnitService(baseUrl: apiBaseUrl);
+      final res = await service.get("unidade");
+      
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        units = data.map((e) => Unit.fromJson(e)).toList();
+        debugPrint("Unidades carregadas: ${units.length}");
+      } else {
+        debugPrint("Erro ao buscar unidades: ${res.statusCode}");
+        units = [];
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar unidades: $e");
+      units = [];
+    }
   }
 
   fetchProperty() async {
-    final service = PropertyService(baseUrl: apiBaseUrl);
-
-    final res = await service.get("imovel");
-    final List<dynamic> data = jsonDecode(res.body);
-    properties = data.map((e) => Property.fromJson(e)).toList();
+    try {
+      final service = PropertyService(baseUrl: apiBaseUrl);
+      final res = await service.get("imovel");
+      
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        properties = data.map((e) => Property.fromJson(e)).toList();
+        debugPrint("Imóveis carregados: ${properties.length}");
+      } else {
+        debugPrint("Erro ao buscar imóveis: ${res.statusCode}");
+        properties = [];
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar imóveis: $e");
+      properties = [];
+    }
   }
 }

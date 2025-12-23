@@ -176,46 +176,46 @@ class _PropertyListState extends State<PropertyList> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              property.nome,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      Expanded(
+                        child: Text(
+                          property.nome,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: property.ativo
-                                  ? Colors.green[100]
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              property.ativo ? "Ativo" : "Inativo",
-                              style: TextStyle(
-                                color: property.ativo
-                                    ? Colors.green[800]
-                                    : Colors.grey[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: property.ativo
+                              ? Colors.green[100]
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          property.ativo ? "Ativo" : "Inativo",
+                          style: TextStyle(
+                            color: property.ativo
+                                ? Colors.green[800]
+                                : Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -262,8 +262,8 @@ class _PropertyListState extends State<PropertyList> {
                       ],
                     ),
                   ],
-                    ],
-                  ),
+                ],
+              ),
                 ),
               ],
             ),

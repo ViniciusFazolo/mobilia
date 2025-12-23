@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:mobilia/service/crud_service.dart';
+import 'package:mobilia/utils/prefs.dart';
 
 class PropertyService extends CrudService {
   PropertyService({required super.baseUrl});
@@ -21,6 +22,12 @@ class PropertyService extends CrudService {
   }) async {
     final uri = Uri.parse('$baseUrl/imovel');
     final request = http.MultipartRequest('POST', uri);
+
+    // Adiciona token de autenticação
+    final token = await Prefs.getString("token");
+    if (token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
 
     // Campos do formulário
     request.fields['ativo'] = ativo.toString();
@@ -70,6 +77,12 @@ class PropertyService extends CrudService {
   }) async {
     final uri = Uri.parse('$baseUrl/imovel/$id');
     final request = http.MultipartRequest('PUT', uri);
+
+    // Adiciona token de autenticação
+    final token = await Prefs.getString("token");
+    if (token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
 
     // Campos do formulário
     request.fields['ativo'] = ativo.toString();

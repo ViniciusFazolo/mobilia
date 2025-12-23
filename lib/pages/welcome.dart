@@ -30,7 +30,7 @@ class _WelcomeState extends State<Welcome> {
             alignment: Alignment.bottomCenter,
             padding: EdgeInsets.only(bottom: 100),
             child: Text(
-              "Mobilia",
+              "Aluguei",
               style: TextStyle(
                 fontSize: 20,
                 color: Colors.white,

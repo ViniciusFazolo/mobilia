@@ -7,7 +7,6 @@ import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/service/resident_service.dart';
 import 'package:mobilia/service/unit_service.dart';
 import 'package:mobilia/domain/resident.dart';
-import 'package:mobilia/utils/date_format.dart';
 import 'package:mobilia/utils/textInputFormatter.dart';
 import 'package:mobilia/utils/utils.dart';
 
@@ -28,11 +27,13 @@ class ResidentController {
   final nomeController = TextEditingController();
   final rgController = TextEditingController();
   final telefoneController = TextEditingController();
-
-  // campos data
-  final dtFimController = TextEditingController();
-  final dtInicioController = TextEditingController();
-  final dtVencimentoController = TextEditingController();
+  
+  // campos endereço
+  final ruaController = TextEditingController();
+  final bairroController = TextEditingController();
+  final cepController = TextEditingController();
+  final cidadeController = TextEditingController();
+  String? estadoSelecionado;
 
   // campos chave estrangeira
   int? imovelSelecionado;
@@ -57,9 +58,11 @@ class ResidentController {
       'telefone': telefoneDigits,
       'cpf': cpfDigits,
       'rg': rgController.text,
-      'dtVencimento': formatDateToIso(dtVencimentoController.text),
-      'dtInicio': formatDateToIso(dtInicioController.text),
-      'dtFim': formatDateToIso(dtFimController.text),
+      'rua': ruaController.text.isNotEmpty ? ruaController.text : null,
+      'bairro': bairroController.text.isNotEmpty ? bairroController.text : null,
+      'cep': cepController.text.isNotEmpty ? cepController.text.replaceAll(RegExp(r'[^\d]'), '') : null,
+      'cidade': cidadeController.text.isNotEmpty ? cidadeController.text : null,
+      'estado': estadoSelecionado,
       'unidade': unidadeSelecionado,
     };
     
@@ -86,10 +89,7 @@ class ResidentController {
               : "Morador cadastrado com sucesso!"),
         ),
       );
-      // Só reseta o formulário se não estiver editando
-      if (editingId == null) {
-        _resetForm(refresh);
-      }
+      // Não reseta mais o formulário, pois vamos voltar para a listagem
       return true;
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -131,9 +131,11 @@ class ResidentController {
     }
     
     rgController.text = morador.rg;
-    dtVencimentoController.text = formatDateFromIso(morador.dtVencimento);
-    dtInicioController.text = formatDateFromIso(morador.dtInicio);
-    dtFimController.text = formatDateFromIso(morador.dtFim);
+    ruaController.text = morador.rua ?? '';
+    bairroController.text = morador.bairro ?? '';
+    cepController.text = morador.cep ?? '';
+    cidadeController.text = morador.cidade ?? '';
+    estadoSelecionado = morador.estado;
     unidadeSelecionado = morador.unidade?.id ?? morador.unidadeId;
   }
 
@@ -180,20 +182,4 @@ class ResidentController {
     refresh();
   }
 
-  void _resetForm(VoidCallback refresh) {
-    formKey.currentState?.reset();
-    cpfController.clear();
-    emailController.clear();
-    nomeController.clear();
-    rgController.clear();
-    telefoneController.clear();
-    dtFimController.clear();
-    dtInicioController.clear();
-    dtVencimentoController.clear();
-    ativo = true;
-    editingId = null;
-    unidadeSelecionado = null;
-
-    refresh();
-  }
 }

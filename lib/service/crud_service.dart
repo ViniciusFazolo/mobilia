@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobilia/utils/prefs.dart';
 
 abstract class CrudService {
   final String baseUrl;
@@ -9,7 +10,7 @@ abstract class CrudService {
   // GET genérico
   Future<http.Response> get(String endpoint) async {
     final url = Uri.parse('$baseUrl/$endpoint');
-    return await http.get(url, headers: _defaultHeaders());
+    return await http.get(url, headers: await _defaultHeaders());
   }
 
   // POST genérico
@@ -17,7 +18,7 @@ abstract class CrudService {
     final url = Uri.parse('$baseUrl/$endpoint');
     return await http.post(
       url,
-      headers: _defaultHeaders(),
+      headers: await _defaultHeaders(),
       body: jsonEncode(data),
     );
   }
@@ -27,7 +28,7 @@ abstract class CrudService {
     final url = Uri.parse('$baseUrl/$endpoint');
     return await http.put(
       url,
-      headers: _defaultHeaders(),
+      headers: await _defaultHeaders(),
       body: jsonEncode(data),
     );
   }
@@ -35,10 +36,19 @@ abstract class CrudService {
   // DELETE genérico
   Future<http.Response> delete(String endpoint) async {
     final url = Uri.parse('$baseUrl/$endpoint');
-    return await http.delete(url, headers: _defaultHeaders());
+    return await http.delete(url, headers: await _defaultHeaders());
   }
 
-  Map<String, String> _defaultHeaders() {
-    return {"Content-Type": "application/json"};
+  Future<Map<String, String>> _defaultHeaders() async {
+    final token = await Prefs.getString("token");
+    final headers = <String, String>{
+      "Content-Type": "application/json",
+    };
+    
+    if (token.isNotEmpty) {
+      headers["Authorization"] = "Bearer $token";
+    }
+    
+    return headers;
   }
 }

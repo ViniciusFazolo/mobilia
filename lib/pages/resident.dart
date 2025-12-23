@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/controller/resident_controller.dart';
 import 'package:mobilia/domain/resident.dart';
+import 'package:mobilia/utils/estados.dart';
 import 'package:mobilia/utils/textInputFormatter.dart';
+import 'package:mobilia/utils/utils.dart';
 import 'package:mobilia/utils/widget/form_layout.dart';
 import 'package:mobilia/utils/widget/input.dart';
-import 'package:mobilia/utils/widget/input_date.dart';
 import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:mobilia/utils/widget/input_switch.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class Resident extends StatefulWidget {
   final Morador? residentToEdit;
@@ -19,6 +21,11 @@ class Resident extends StatefulWidget {
 
 class _ResidentState extends State<Resident> {
   ResidentController residentController = ResidentController();
+  
+  final cepMask = MaskTextInputFormatter(
+    mask: '#####-###',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
 
   @override
   void initState() {
@@ -82,17 +89,71 @@ class _ResidentState extends State<Resident> {
               return null;
             },
           ),
-          InputDate(
-            label: "Data inicial",
-            controller: residentController.dtInicioController,
+          const SizedBox(height: 16),
+          const Text(
+            "Endereço",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          InputDate(
-            label: "Data final",
-            controller: residentController.dtFimController,
+          const SizedBox(height: 8),
+          Input(
+            label: "CEP",
+            controller: residentController.cepController,
+            inputFormatters: [cepMask],
+            onFocusChange: (focus) async {
+              if (!focus) {
+                if (residentController.cepController.text.isNotEmpty) {
+                  final resultado = await findCep(
+                    residentController.cepController.text.replaceAll(RegExp(r'[^\d]'), ''),
+                  );
+                  if (resultado != null) {
+                    setState(() {
+                      residentController.cidadeController.text = resultado['cidade'] ?? '';
+                      residentController.bairroController.text = resultado['bairro'] ?? '';
+                      residentController.ruaController.text = resultado['rua'] ?? '';
+                      residentController.estadoSelecionado = resultado['estado'];
+                    });
+                  }
+                }
+              }
+            },
+            requiredField: false,
           ),
-          InputDate(
-            label: "Data de vencimento do aluguel",
-            controller: residentController.dtVencimentoController,
+          InputSelect<String>(
+            key: ValueKey('estado_${residentController.estadoSelecionado}_${residentController.editingId}'),
+            label: "Estado",
+            value: residentController.estadoSelecionado,
+            items: estados
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e["sigla"],
+                    child: Text(e["nome"]!),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                residentController.estadoSelecionado = val;
+              });
+            },
+            validator: null,
+          ),
+          Input(
+            label: "Cidade",
+            controller: residentController.cidadeController,
+            requiredField: false,
+          ),
+          Input(
+            label: "Bairro",
+            controller: residentController.bairroController,
+            requiredField: false,
+          ),
+          Input(
+            label: "Rua",
+            controller: residentController.ruaController,
+            requiredField: false,
           ),
           InputSelect<int>(
             key: ValueKey('unidade_${residentController.unidadeSelecionado}_${residentController.editingId}'),
@@ -107,7 +168,7 @@ class _ResidentState extends State<Resident> {
                   ),
                 )
                 .toList(),
-            label: "Em qual unidade esse morador reside?",
+            label: "Responsável por qual unidade?",
             onChanged: (value) {
               setState(() {
                 residentController.unidadeSelecionado = value;
@@ -133,13 +194,9 @@ class _ResidentState extends State<Resident> {
                         context,
                         () => setState(() {}),
                       );
-                      // Se estava editando e a operação foi bem-sucedida, volta para a lista
-                      if (success && widget.residentToEdit != null && context.mounted) {
-                        // Aguarda um pouco para mostrar a mensagem de sucesso
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        if (context.mounted) {
-                          Navigator.pop(context, true);
-                        }
+                      // Volta para a listagem após salvar (tanto para cadastro quanto edição)
+                      if (success && context.mounted) {
+                        Navigator.pop(context, true);
                       }
                     },
               style: ElevatedButton.styleFrom(

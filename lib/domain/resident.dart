@@ -9,9 +9,13 @@ class Morador {
   final String cpf;
   final String rg;
   final bool ativo;
-  final DateTime? dtVencimento;
-  final DateTime? dtInicio;
-  final DateTime? dtFim;
+  
+  // Endereço
+  final String? rua;
+  final String? bairro;
+  final String? cep;
+  final String? cidade;
+  final String? estado;
 
   // Relações
   final int? unidadeId;    // usado no request
@@ -28,9 +32,11 @@ class Morador {
     required this.cpf,
     required this.rg,
     this.ativo = true,
-    this.dtVencimento,
-    this.dtInicio,
-    this.dtFim,
+    this.rua,
+    this.bairro,
+    this.cep,
+    this.cidade,
+    this.estado,
     this.unidadeId,
     this.unidade,
     this.imovelId,
@@ -47,15 +53,11 @@ class Morador {
       cpf: json['cpf'] ?? '',
       rg: json['rg'] ?? '',
       ativo: json['ativo'] ?? true,
-      dtVencimento: json['dtVencimento'] != null
-          ? DateTime.parse(json['dtVencimento'])
-          : null,
-      dtInicio: json['dtInicio'] != null
-          ? DateTime.parse(json['dtInicio'])
-          : null,
-      dtFim: json['dtFim'] != null
-          ? DateTime.parse(json['dtFim'])
-          : null,
+      rua: json['rua'],
+      bairro: json['bairro'],
+      cep: json['cep'],
+      cidade: json['cidade'],
+      estado: json['estado'],
       unidade: json['unidade'] != null ? Unit.fromJson(json['unidade']) : null,
       imovel: json['imovel'] != null ? Property.fromJson(json['imovel']) : null,
     );
@@ -71,9 +73,11 @@ class Morador {
       'cpf': cpf,
       'rg': rg,
       'ativo': ativo,
-      'dtVencimento': dtVencimento?.toIso8601String(),
-      'dtInicio': dtInicio?.toIso8601String(),
-      'dtFim': dtFim?.toIso8601String(),
+      'rua': rua,
+      'bairro': bairro,
+      'cep': cep,
+      'cidade': cidade,
+      'estado': estado,
       'unidade': unidadeId ?? unidade?.id,
       'imovel': imovelId ?? imovel?.id,
     };

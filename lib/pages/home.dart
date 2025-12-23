@@ -72,7 +72,7 @@ class _HomeState extends State<Home> {
         backgroundColor: Colors.white,
         foregroundColor: colorScheme.primary,
         title: const Text(
-          "Mobília",
+          "Aluguei",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,

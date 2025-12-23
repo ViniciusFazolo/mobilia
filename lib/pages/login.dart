@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/controller/login_controller.dart';
+import 'package:mobilia/pages/register.dart';
 import 'package:mobilia/utils/widget/button.dart';
 import 'package:mobilia/utils/widget/input.dart';
 
@@ -158,6 +159,24 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 child: Button(
                                   label: "Entrar",
                                   onPressed: onPressedLogin,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const Register(),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  "Não tem uma conta? Registre-se",
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],

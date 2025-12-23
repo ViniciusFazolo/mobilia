@@ -6,6 +6,7 @@ import 'package:mobilia/pages/units_page.dart';
 import 'package:mobilia/pages/residents_page.dart';
 import 'package:mobilia/pages/contracts_page.dart';
 import 'package:mobilia/pages/parcels_page.dart';
+import 'package:mobilia/pages/profile.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Mobília',
+      title: 'Aluguei',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
         useMaterial3: true,
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/residents': (context) => const ResidentsPage(),
         '/contracts': (context) => const ContractsPage(),
         '/parcels': (context) => const ParcelsPage(),
+        '/profile': (context) => const Profile(),
       },
     );
   }

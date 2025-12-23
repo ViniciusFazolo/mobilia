@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobilia/service/crud_service.dart';
+import 'package:mobilia/utils/prefs.dart';
 import 'package:http/http.dart' as http;
 
 class UnitService extends CrudService {
@@ -29,6 +30,12 @@ class UnitService extends CrudService {
       '$baseUrl/unidade',
     );
     final request = http.MultipartRequest('POST', uri);
+
+    // Adiciona token de autenticação
+    final token = await Prefs.getString("token");
+    if (token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
 
     // Campos do formulário
     request.fields['ativo'] = ativo.toString();
@@ -92,6 +99,12 @@ class UnitService extends CrudService {
   }) async {
     final uri = Uri.parse('$baseUrl/unidade/$id');
     final request = http.MultipartRequest('PUT', uri);
+
+    // Adiciona token de autenticação
+    final token = await Prefs.getString("token");
+    if (token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
 
     // Campos do formulário
     request.fields['ativo'] = ativo.toString();

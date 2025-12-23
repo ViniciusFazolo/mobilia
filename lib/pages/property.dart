@@ -72,6 +72,15 @@ class _PropertyState extends State<Property> {
         spacing: 10,
         children: [
           Input(label: "Nome", controller: nomeController),
+          const SizedBox(height: 16),
+          const Text(
+            "Endereço",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
           Input(
             label: "CEP",
             controller: cepController,
@@ -234,23 +243,8 @@ class _PropertyState extends State<Property> {
         ),
       );
 
-      if (widget.propertyToEdit == null) {
-        _formKey.currentState!.reset();
-
-        nomeController.clear();
-        cepController.clear();
-        cidadeController.clear();
-        bairroController.clear();
-        ruaController.clear();
-        numeroController.clear();
-        complementoController.clear();
-
-        setState(() {
-          estadoSelecionado = null;
-          imagem = null;
-          isActive = true;
-        });
-      } else {
+      // Volta para a listagem após salvar (tanto para cadastro quanto edição)
+      if (context.mounted) {
         Navigator.pop(context, true);
       }
     } else {

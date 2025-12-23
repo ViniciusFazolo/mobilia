@@ -215,46 +215,46 @@ class _UnitListState extends State<UnitList> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              unit.identificacao,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      Expanded(
+                        child: Text(
+                          unit.identificacao,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: unit.ativo
-                                  ? Colors.green[100]
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              unit.ativo ? "Ativo" : "Inativo",
-                              style: TextStyle(
-                                color: unit.ativo
-                                    ? Colors.green[800]
-                                    : Colors.grey[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: unit.ativo
+                              ? Colors.green[100]
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          unit.ativo ? "Ativo" : "Inativo",
+                          style: TextStyle(
+                            color: unit.ativo
+                                ? Colors.green[800]
+                                : Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   if (unit.imovel != null) ...[
                     const SizedBox(height: 8),
                     Row(
@@ -274,7 +274,7 @@ class _UnitListState extends State<UnitList> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.payments, size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
                         "R\$ ${unit.valorAluguel}",
@@ -312,8 +312,8 @@ class _UnitListState extends State<UnitList> {
                       ],
                     ),
                   ],
-                    ],
-                  ),
+                ],
+              ),
                 ),
               ],
             ),

@@ -65,6 +65,68 @@ class _UnitsPageState extends State<UnitsPage> {
     }
   }
 
+  Future<void> _deleteUnit(domain.Unit unit) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmar exclusão"),
+        content: Text("Deseja realmente excluir a unidade \"${unit.identificacao}\"?\n\nEsta ação não pode ser desfeita."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && unit.id != null) {
+      try {
+        final service = UnitService(baseUrl: apiBaseUrl);
+        final endpoint = "unidade/${unit.id}";
+        debugPrint("Deletando unidade - Endpoint: $endpoint, ID: ${unit.id}");
+        final response = await service.delete(endpoint);
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Unidade excluída com sucesso!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _loadUnits();
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Erro ao excluir unidade (${response.statusCode})"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Erro ao excluir unidade: $e"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,27 +319,37 @@ class _UnitsPageState extends State<UnitsPage> {
                               ),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: unit.ativo
-                                  ? Colors.green[100]
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              unit.ativo ? "Ativo" : "Inativo",
-                              style: TextStyle(
-                                color: unit.ativo
-                                    ? Colors.green[800]
-                                    : Colors.grey[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: unit.ativo
+                                      ? Colors.green[100]
+                                      : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  unit.ativo ? "Ativo" : "Inativo",
+                                  style: TextStyle(
+                                    color: unit.ativo
+                                        ? Colors.green[800]
+                                        : Colors.grey[700],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteUnit(unit),
+                                tooltip: "Excluir unidade",
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -300,7 +372,7 @@ class _UnitsPageState extends State<UnitsPage> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.payments, size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
                         "R\$ ${unit.valorAluguel}",

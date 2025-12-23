@@ -189,7 +189,8 @@ class _UnitState extends State<Unit> {
                         context,
                         () => setState(() {}),
                       );
-                      if (success && widget.unitToEdit != null && context.mounted) {
+                      // Volta para a listagem após salvar (tanto para cadastro quanto edição)
+                      if (success && context.mounted) {
                         Navigator.pop(context, true);
                       }
                     },

@@ -65,6 +65,68 @@ class _ResidentsPageState extends State<ResidentsPage> {
     }
   }
 
+  Future<void> _deleteResident(domain.Morador resident) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmar exclusão"),
+        content: Text("Deseja realmente excluir o morador \"${resident.nome}\"?\n\nEsta ação não pode ser desfeita."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && resident.id != null) {
+      try {
+        final service = ResidentService(baseUrl: apiBaseUrl);
+        final endpoint = "morador/${resident.id}";
+        debugPrint("Deletando morador - Endpoint: $endpoint, ID: ${resident.id}");
+        final response = await service.delete(endpoint);
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Morador excluído com sucesso!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _loadResidents();
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Erro ao excluir morador (${response.statusCode})"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Erro ao excluir morador: $e"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,27 +238,37 @@ class _ResidentsPageState extends State<ResidentsPage> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: resident.ativo
-                              ? Colors.green[100]
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          resident.ativo ? "Ativo" : "Inativo",
-                          style: TextStyle(
-                            color: resident.ativo
-                                ? Colors.green[800]
-                                : Colors.grey[700],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: resident.ativo
+                                  ? Colors.green[100]
+                                  : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              resident.ativo ? "Ativo" : "Inativo",
+                              style: TextStyle(
+                                color: resident.ativo
+                                    ? Colors.green[800]
+                                    : Colors.grey[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteResident(resident),
+                            tooltip: "Excluir morador",
+                          ),
+                        ],
                       ),
                     ],
                   ),

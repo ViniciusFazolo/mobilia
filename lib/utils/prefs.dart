@@ -36,4 +36,14 @@ class Prefs {
 
     prefs.setString(key, s);
   }
+
+  static Future<void> clear() async {
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
+  static Future<void> remove(String key) async {
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
+  }
 }

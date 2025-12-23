@@ -260,12 +260,12 @@ class _InputImageState extends State<InputImage> {
                 : Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12),
                         child: _selectedImage != null
                             ? Image.file(
-                                _selectedImage!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
+                      _selectedImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
                                 height: 180,
                               )
                             : widget.initialImageUrl != null

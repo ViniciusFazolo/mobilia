@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobilia/domain/contract.dart' as domain;
 import 'package:mobilia/domain/contract.dart';
+import 'package:mobilia/domain/resident.dart';
 import 'package:mobilia/pages/contract.dart';
 import 'package:mobilia/pages/contract_pdf_view.dart';
 import 'package:mobilia/service/contract_service.dart';
+import 'package:mobilia/service/resident_service.dart';
 import 'package:mobilia/utils/utils.dart';
+import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:intl/intl.dart';
 
 class ContractsPage extends StatefulWidget {
@@ -17,16 +20,47 @@ class ContractsPage extends StatefulWidget {
 
 class _ContractsPageState extends State<ContractsPage> {
   List<domain.Contrato> contracts = [];
+  List<Morador> residents = [];
   bool isLoading = true;
+  bool isLoadingResidents = false;
   String? errorMessage;
+  int? selectedResidentId; // ID do morador selecionado para filtro
 
   @override
   void initState() {
     super.initState();
+    _loadResidents();
     _loadContracts();
   }
 
-  Future<void> _loadContracts() async {
+  Future<void> _loadResidents() async {
+    setState(() {
+      isLoadingResidents = true;
+    });
+
+    try {
+      final service = ResidentService(baseUrl: apiBaseUrl);
+      final response = await service.get("morador");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          residents = data.map((e) => Morador.fromJson(e)).toList();
+          isLoadingResidents = false;
+        });
+      } else {
+        setState(() {
+          isLoadingResidents = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingResidents = false;
+      });
+    }
+  }
+
+  Future<void> _loadContracts({int? moradorId}) async {
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -34,7 +68,10 @@ class _ContractsPageState extends State<ContractsPage> {
 
     try {
       final service = ContractService(baseUrl: apiBaseUrl);
-      final response = await service.get("contrato");
+      final String endpoint = moradorId != null
+          ? "contrato/byMoradorId/$moradorId"
+          : "contrato";
+      final response = await service.get(endpoint);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -56,6 +93,86 @@ class _ContractsPageState extends State<ContractsPage> {
     }
   }
 
+  void _onResidentChanged(int? residentId) {
+    setState(() {
+      selectedResidentId = residentId;
+    });
+    _loadContracts(moradorId: residentId);
+  }
+
+  void _clearFilter() {
+    setState(() {
+      selectedResidentId = null;
+    });
+    _loadContracts();
+  }
+
+  Future<void> _deleteContract(domain.Contrato contract) async {
+    final contractName = contract.unidade?.identificacao ?? 
+                        contract.imovel?.nome ?? 
+                        "Contrato #${contract.id}";
+    
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmar exclusão"),
+        content: Text("Deseja realmente excluir o contrato \"$contractName\"?\n\nEsta ação não pode ser desfeita."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && contract.id != null) {
+      try {
+        final service = ContractService(baseUrl: apiBaseUrl);
+        final endpoint = "contrato/${contract.id}";
+        debugPrint("Deletando contrato - Endpoint: $endpoint, ID: ${contract.id}");
+        final response = await service.delete(endpoint);
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Contrato excluído com sucesso!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _loadContracts(moradorId: selectedResidentId);
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Erro ao excluir contrato (${response.statusCode})"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Erro ao excluir contrato: $e"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   void _navigateToCreate() async {
     final result = await Navigator.push(
       context,
@@ -64,7 +181,7 @@ class _ContractsPageState extends State<ContractsPage> {
     
     // Recarrega a lista quando volta da tela de cadastro
     if (result == true || result == null) {
-      _loadContracts();
+      _loadContracts(moradorId: selectedResidentId);
     }
   }
 
@@ -94,7 +211,7 @@ class _ContractsPageState extends State<ContractsPage> {
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body: RefreshIndicator(
-        onRefresh: _loadContracts,
+        onRefresh: () => _loadContracts(moradorId: selectedResidentId),
         child: _buildBody(),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -108,6 +225,61 @@ class _ContractsPageState extends State<ContractsPage> {
   }
 
   Widget _buildBody() {
+    return Column(
+      children: [
+        // Filtro por morador
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Theme.of(context).colorScheme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: InputSelect<int>(
+                      label: "Filtrar por morador",
+                      hint: "Selecione um morador (opcional)",
+                      value: selectedResidentId,
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: null,
+                          child: Text("Todos os contratos"),
+                        ),
+                        ...residents.map(
+                          (resident) => DropdownMenuItem<int>(
+                            value: resident.id,
+                            child: Text(resident.nome),
+                          ),
+                        ),
+                      ],
+                      onChanged: _onResidentChanged,
+                      validator: null, // Não é obrigatório
+                    ),
+                  ),
+                  if (selectedResidentId != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _clearFilter,
+                      icon: const Icon(Icons.clear),
+                      tooltip: "Limpar filtro",
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+        // Lista de contratos
+        Expanded(
+          child: _buildContractsList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContractsList() {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -126,7 +298,7 @@ class _ContractsPageState extends State<ContractsPage> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadContracts,
+              onPressed: () => _loadContracts(moradorId: selectedResidentId),
               child: const Text("Tentar novamente"),
             ),
           ],
@@ -142,14 +314,17 @@ class _ContractsPageState extends State<ContractsPage> {
             Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              "Nenhum contrato cadastrado",
+              selectedResidentId != null
+                  ? "Nenhum contrato encontrado para este morador"
+                  : "Nenhum contrato cadastrado",
               style: TextStyle(color: Colors.grey[600], fontSize: 16),
             ),
             const SizedBox(height: 8),
-            Text(
-              "Toque no botão + para cadastrar",
-              style: TextStyle(color: Colors.grey[500], fontSize: 14),
-            ),
+            if (selectedResidentId == null)
+              Text(
+                "Toque no botão + para cadastrar",
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              ),
           ],
         ),
       );
@@ -253,29 +428,39 @@ class _ContractsPageState extends State<ContractsPage> {
                           ],
                         ),
                       ),
-                      if (contract.status != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: contract.status!
-                                ? Colors.green[100]
-                                : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            contract.status! ? "Ativo" : "Inativo",
-                            style: TextStyle(
-                              color: contract.status!
-                                  ? Colors.green[800]
-                                  : Colors.grey[700],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          if (contract.status != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: contract.status!
+                                    ? Colors.green[100]
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                contract.status! ? "Ativo" : "Inativo",
+                                style: TextStyle(
+                                  color: contract.status!
+                                      ? Colors.green[800]
+                                      : Colors.grey[700],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteContract(contract),
+                            tooltip: "Excluir contrato",
                           ),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -313,13 +498,13 @@ class _ContractsPageState extends State<ContractsPage> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  if (contract.valorAluguel != null) ...[
+                  if (contract.unidade?.valorAluguel != null && contract.unidade!.valorAluguel.isNotEmpty) ...[
                     Row(
                       children: [
-                        Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.payments, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          "R\$ ${contract.valorAluguel!.toStringAsFixed(2)}",
+                          "R\$ ${contract.unidade!.valorAluguel}",
                           style: TextStyle(
                             color: Colors.grey[800],
                             fontSize: 14,

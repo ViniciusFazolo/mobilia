@@ -50,14 +50,14 @@ class _InputSelectState<T> extends State<InputSelect<T>> {
         setState(() => _currentValue = val);
         if (widget.onChanged != null) widget.onChanged!(val);
       },
-      validator:
-          widget.validator ??
-          (val) {
+      validator: widget.validator ??
+          ((val) {
             if (val == null) return "Campo obrigatório";
             return null;
-          },
-      autovalidateMode: AutovalidateMode
-          .onUserInteraction,
+          }),
+      autovalidateMode: widget.validator != null
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,
