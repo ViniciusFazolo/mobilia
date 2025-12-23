@@ -147,51 +147,114 @@ class _PropertiesPageState extends State<PropertiesPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
-            onTap: () {
-              // Pode adicionar navegação para detalhes aqui
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Property(
+                    propertyToEdit: domain.Property(
+                      id: property.id,
+                      nome: property.nome,
+                      cep: property.cep,
+                      estado: property.estado,
+                      cidade: property.cidade,
+                      bairro: property.bairro,
+                      rua: property.rua,
+                      numero: property.numero,
+                      complemento: property.complemento,
+                      imagem: property.imagem,
+                      ativo: property.ativo,
+                      dtCadastro: property.dtCadastro,
+                    ),
+                  ),
+                ),
+              );
+              if (result == true) {
+                _loadProperties();
+              }
             },
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          property.nome,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagem do imóvel
+                if (property.imagem != null && property.imagem!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                    child: Image.network(
+                      property.imagem!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: property.ativo
-                              ? Colors.green[100]
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          property.ativo ? "Ativo" : "Inativo",
-                          style: TextStyle(
-                            color: property.ativo
-                                ? Colors.green[800]
-                                : Colors.grey[700],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
                           ),
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              property.nome,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: property.ativo
+                                  ? Colors.green[100]
+                                  : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              property.ativo ? "Ativo" : "Inativo",
+                              style: TextStyle(
+                                color: property.ativo
+                                    ? Colors.green[800]
+                                    : Colors.grey[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -238,8 +301,10 @@ class _PropertiesPageState extends State<PropertiesPage> {
                       ],
                     ),
                   ],
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );

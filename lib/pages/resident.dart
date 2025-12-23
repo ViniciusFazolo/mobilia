@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobilia/controller/resident_controller.dart';
+import 'package:mobilia/domain/resident.dart';
 import 'package:mobilia/utils/textInputFormatter.dart';
 import 'package:mobilia/utils/widget/form_layout.dart';
 import 'package:mobilia/utils/widget/input.dart';
@@ -8,7 +9,9 @@ import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:mobilia/utils/widget/input_switch.dart';
 
 class Resident extends StatefulWidget {
-  const Resident({super.key});
+  final Morador? residentToEdit;
+  
+  const Resident({super.key, this.residentToEdit});
 
   @override
   State<Resident> createState() => _ResidentState();
@@ -20,13 +23,18 @@ class _ResidentState extends State<Resident> {
   @override
   void initState() {
     super.initState();
-    residentController.fetchProperty(context, () => setState(() {}));
-    residentController.fetchUnit(context, () => setState(() {}));
+    residentController.fetchUnit(context, () {
+      if (widget.residentToEdit != null) {
+        residentController.loadForEdit(widget.residentToEdit!);
+      }
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FormLayout(title: "Cadastrar morador", child: _content());
+    final title = widget.residentToEdit != null ? "Editar morador" : "Cadastrar morador";
+    return FormLayout(title: title, child: _content());
   }
 
   _content() {
@@ -35,15 +43,6 @@ class _ResidentState extends State<Resident> {
       child: Column(
         spacing: 10,
         children: [
-          InputSwitch(
-            label: "Ativo?",
-            value: residentController.ativo,
-            onChanged: (val) {
-              setState(() {
-                residentController.ativo = val;
-              });
-            },
-          ),
           Input(label: "Nome", controller: residentController.nomeController),
           Input(
             label: "E-mail",
@@ -55,7 +54,12 @@ class _ResidentState extends State<Resident> {
             inputFormatters: [telefoneMask],
             keyboardType: TextInputType.phone,
             validator: (value) {
-              if (!telefoneMask.isFill()) {
+              if (value == null || value.isEmpty) {
+                return "Telefone obrigatório";
+              }
+              // Remove caracteres não numéricos para verificar se tem 10 ou 11 dígitos
+              final digits = value.replaceAll(RegExp(r'[^\d]'), '');
+              if (digits.length < 10 || digits.length > 11) {
                 return "Telefone incompleto";
               }
               return null;
@@ -67,7 +71,12 @@ class _ResidentState extends State<Resident> {
             controller: residentController.cpfController,
             inputFormatters: [cpfMask],
             validator: (value) {
-              if (!cpfMask.isFill()) {
+              if (value == null || value.isEmpty) {
+                return "CPF obrigatório";
+              }
+              // Remove caracteres não numéricos para verificar se tem 11 dígitos
+              final digits = value.replaceAll(RegExp(r'[^\d]'), '');
+              if (digits.length != 11) {
                 return "CPF incompleto";
               }
               return null;
@@ -85,27 +94,33 @@ class _ResidentState extends State<Resident> {
             label: "Data de vencimento do aluguel",
             controller: residentController.dtVencimentoController,
           ),
-          InputSelect(
-            items: residentController.properties
-                .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nome)))
-                .toList(),
-            label: "Em qual imóvel esse morador reside?",
-            onChanged: (value) {
-              residentController.imovelSelecionado = value!;
-            },
-          ),
-          InputSelect(
+          InputSelect<int>(
+            key: ValueKey('unidade_${residentController.unidadeSelecionado}_${residentController.editingId}'),
+            value: residentController.unidadeSelecionado != null && residentController.unidadeSelecionado != 0
+                ? residentController.unidadeSelecionado
+                : null,
             items: residentController.units
                 .map(
-                  (e) => DropdownMenuItem(
+                  (e) => DropdownMenuItem<int>(
                     value: e.id,
                     child: Text(e.identificacao),
                   ),
                 )
                 .toList(),
-            label: "Em qual unidade esse imóvel está?",
+            label: "Em qual unidade esse morador reside?",
             onChanged: (value) {
-              residentController.unidadeSelecionado = value!;
+              setState(() {
+                residentController.unidadeSelecionado = value;
+              });
+            },
+          ),
+          InputSwitch(
+            label: "Ativo?",
+            value: residentController.ativo,
+            onChanged: (val) {
+              setState(() {
+                residentController.ativo = val;
+              });
             },
           ),
           SizedBox(
@@ -113,10 +128,20 @@ class _ResidentState extends State<Resident> {
             child: ElevatedButton(
               onPressed: residentController.isLoading
                   ? null
-                  : () => residentController.submitForm(
-                      context,
-                      () => setState(() {}),
-                    ),
+                  : () async {
+                      final success = await residentController.submitForm(
+                        context,
+                        () => setState(() {}),
+                      );
+                      // Se estava editando e a operação foi bem-sucedida, volta para a lista
+                      if (success && widget.residentToEdit != null && context.mounted) {
+                        // Aguarda um pouco para mostrar a mensagem de sucesso
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        if (context.mounted) {
+                          Navigator.pop(context, true);
+                        }
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,

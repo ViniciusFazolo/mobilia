@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobilia/controller/unit_controller.dart';
+import 'package:mobilia/domain/unit.dart' as domain;
 import 'package:mobilia/utils/textInputFormatter.dart';
 import 'package:mobilia/utils/widget/form_layout.dart';
 import 'package:mobilia/utils/widget/input.dart';
@@ -9,7 +10,9 @@ import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:mobilia/utils/widget/input_switch.dart';
 
 class Unit extends StatefulWidget {
-  const Unit({super.key});
+  final domain.Unit? unitToEdit;
+  
+  const Unit({super.key, this.unitToEdit});
 
   @override
   State<Unit> createState() => _UnitState();
@@ -21,12 +24,21 @@ class _UnitState extends State<Unit> {
   @override
   void initState() {
     super.initState();
-    unitController.fetchProperty(context, () => setState(() {}));
+    // Busca as propriedades primeiro
+    unitController.fetchProperty(context, () {
+      // Depois, se há unidade para editar, carrega os dados
+      if (widget.unitToEdit != null) {
+        unitController.loadForEdit(widget.unitToEdit!);
+      }
+      // Atualiza a UI após tudo estar carregado
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FormLayout(title: "Cadastrar unidade", child: _content());
+    final title = widget.unitToEdit != null ? "Editar unidade" : "Cadastrar unidade";
+    return FormLayout(title: title, child: _content());
   }
 
   _content() {
@@ -35,46 +47,27 @@ class _UnitState extends State<Unit> {
       child: Column(
         spacing: 10,
         children: [
-          InputSwitch(
-            label: "Ativo?",
-            value: unitController.isActive,
-            onChanged: (val) {
-              setState(() {
-                unitController.isActive = val;
-              });
-            },
-          ),
-          InputSwitch(
-            label: "Possui cozinha?",
-            value: unitController.cozinha,
-            onChanged: (val) {
-              setState(() {
-                unitController.cozinha = val;
-              });
-            },
-          ),
-          InputSwitch(
-            label: "Possui área de serviço?",
-            value: unitController.areaServico,
-            onChanged: (val) {
-              setState(() {
-                unitController.areaServico = val;
-              });
-            },
-          ),
-          InputSelect(
+          InputSelect<int>(
+            key: ValueKey('imovel_${unitController.imovelSelecionado}_${unitController.editingId}'),
+            value: unitController.imovelSelecionado != 0 ? unitController.imovelSelecionado : null,
             items: unitController.properties
                 .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nome)))
                 .toList(),
             label: "Essa unidade pertence a que imóvel?",
             onChanged: (value) {
-              unitController.imovelSelecionado = value!;
+              setState(() {
+                unitController.imovelSelecionado = value ?? 0;
+              });
             },
           ),
-          InputSelect(
+          InputSelect<String>(
+            key: ValueKey('status_${unitController.statusSelecionado}_${unitController.editingId}'),
+            value: unitController.statusSelecionado.isNotEmpty 
+                ? unitController.statusSelecionado 
+                : null,
             items: unitController.statusOptions
                 .map(
-                  (e) => DropdownMenuItem(
+                  (e) => DropdownMenuItem<String>(
                     value: e["value"],
                     child: Text(e["label"]!),
                   ),
@@ -82,7 +75,9 @@ class _UnitState extends State<Unit> {
                 .toList(),
             label: "Status",
             onChanged: (value) {
-              unitController.statusSelecionado = value!;
+              setState(() {
+                unitController.statusSelecionado = value ?? '';
+              });
             },
           ),
           Input(
@@ -139,13 +134,48 @@ class _UnitState extends State<Unit> {
             inputFormatters: [onlyDigits],
             controller: unitController.qtdGaragemController,
           ),
-          InputImage(
-            label: "Imagens do imóvel",
-            multiple: true,
-            onChangedMultiple: (files) {
+          InputSwitch(
+            label: "Possui cozinha?",
+            value: unitController.cozinha,
+            onChanged: (val) {
               setState(() {
-                debugPrint(files.map((f) => f.path).join(', '));
-                unitController.imagens = files;
+                unitController.cozinha = val;
+              });
+            },
+          ),
+          InputSwitch(
+            label: "Possui área de serviço?",
+            value: unitController.areaServico,
+            onChanged: (val) {
+              setState(() {
+                unitController.areaServico = val;
+              });
+            },
+          ),
+          Builder(
+            builder: (context) {
+              final imageUrls = widget.unitToEdit?.imagensUrls;
+              print('DEBUG InputImage Unit - imageUrls: $imageUrls');
+              return InputImage(
+                label: "Imagens do imóvel",
+                multiple: true,
+                initialImageUrls: imageUrls,
+                onChangedMultiple: (files) {
+                  setState(() {
+                    debugPrint(files.map((f) => f.path).join(', '));
+                    unitController.imagens = files;
+                    unitController.imagensModificadas = true; // Marca que as imagens foram modificadas
+                  });
+                },
+              );
+            },
+          ),
+          InputSwitch(
+            label: "Ativo?",
+            value: unitController.isActive,
+            onChanged: (val) {
+              setState(() {
+                unitController.isActive = val;
               });
             },
           ),
@@ -154,10 +184,15 @@ class _UnitState extends State<Unit> {
             child: ElevatedButton(
               onPressed: unitController.isLoading
                   ? null
-                  : () => unitController.submitForm(
-                      context,
-                      () => setState(() {}),
-                    ),
+                  : () async {
+                      final success = await unitController.submitForm(
+                        context,
+                        () => setState(() {}),
+                      );
+                      if (success && widget.unitToEdit != null && context.mounted) {
+                        Navigator.pop(context, true);
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,

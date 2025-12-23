@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:mobilia/domain/property.dart' as domain;
 import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/utils/estados.dart';
 import 'package:mobilia/utils/utils.dart';
@@ -11,7 +12,9 @@ import 'package:mobilia/utils/widget/input_select.dart';
 import 'package:mobilia/utils/widget/input_switch.dart';
 
 class Property extends StatefulWidget {
-  const Property({super.key});
+  final domain.Property? propertyToEdit;
+  
+  const Property({super.key, this.propertyToEdit});
 
   @override
   State<Property> createState() => _PropertyState();
@@ -33,8 +36,33 @@ class _PropertyState extends State<Property> {
   bool isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.propertyToEdit != null) {
+      _loadForEdit(widget.propertyToEdit!);
+    }
+  }
+
+  void _loadForEdit(domain.Property property) {
+    isActive = property.ativo;
+    nomeController.text = property.nome;
+    cepController.text = property.cep;
+    estadoSelecionado = property.estado;
+    cidadeController.text = property.cidade;
+    bairroController.text = property.bairro;
+    ruaController.text = property.rua;
+    numeroController.text = property.numero?.toString() ?? '';
+    complementoController.text = property.complemento ?? '';
+    
+    // Debug: verifica se a imagem foi carregada
+    print('DEBUG _loadForEdit - property.imagem: ${property.imagem}');
+    print('DEBUG _loadForEdit - property.imagens: ${property.imagens}');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FormLayout(title: "Cadastrar imóvel", child: content());
+    final title = widget.propertyToEdit != null ? "Editar imóvel" : "Cadastrar imóvel";
+    return FormLayout(title: title, child: content());
   }
 
   content() {
@@ -43,15 +71,6 @@ class _PropertyState extends State<Property> {
       child: Column(
         spacing: 10,
         children: [
-          InputSwitch(
-            label: "Ativo?",
-            value: isActive,
-            onChanged: (val) {
-              setState(() {
-                isActive = val;
-              });
-            },
-          ),
           Input(label: "Nome", controller: nomeController),
           Input(
             label: "CEP",
@@ -107,12 +126,31 @@ class _PropertyState extends State<Property> {
             controller: complementoController,
             requiredField: false,
           ),
-          InputImage(
-            label: "Imagem do imóvel",
-            multiple: false,
-            onChanged: (file) {
+          Builder(
+            builder: (context) {
+              final imageUrl = widget.propertyToEdit?.imagem ?? 
+                  (widget.propertyToEdit?.imagens != null && widget.propertyToEdit!.imagens!.isNotEmpty
+                      ? widget.propertyToEdit!.imagens!.first
+                      : null);
+              print('DEBUG InputImage widget - imageUrl: $imageUrl');
+              return InputImage(
+                label: "Imagem do imóvel",
+                multiple: false,
+                initialImageUrl: imageUrl,
+                onChanged: (file) {
+                  setState(() {
+                    imagem = file;
+                  });
+                },
+              );
+            },
+          ),
+          InputSwitch(
+            label: "Ativo?",
+            value: isActive,
+            onChanged: (val) {
               setState(() {
-                imagem = file;
+                isActive = val;
               });
             },
           ),
@@ -156,18 +194,32 @@ class _PropertyState extends State<Property> {
       isLoading = true;
     });
 
-    final response = await service.createProperty(
-      ativo: isActive,
-      nome: nomeController.text,
-      cep: cepController.text,
-      estado: estadoSelecionado ?? '',
-      cidade: cidadeController.text,
-      bairro: bairroController.text,
-      rua: ruaController.text,
-      numero: numeroController.text,
-      complemento: complementoController.text,
-      imagens: imagens,
-    );
+    final response = widget.propertyToEdit != null && widget.propertyToEdit!.id != null
+        ? await service.updateProperty(
+            id: widget.propertyToEdit!.id!,
+            ativo: isActive,
+            nome: nomeController.text,
+            cep: cepController.text,
+            estado: estadoSelecionado ?? '',
+            cidade: cidadeController.text,
+            bairro: bairroController.text,
+            rua: ruaController.text,
+            numero: numeroController.text,
+            complemento: complementoController.text,
+            imagens: imagens,
+          )
+        : await service.createProperty(
+            ativo: isActive,
+            nome: nomeController.text,
+            cep: cepController.text,
+            estado: estadoSelecionado ?? '',
+            cidade: cidadeController.text,
+            bairro: bairroController.text,
+            rua: ruaController.text,
+            numero: numeroController.text,
+            complemento: complementoController.text,
+            imagens: imagens,
+          );
 
     setState(() {
       isLoading = false;
@@ -175,28 +227,42 @@ class _PropertyState extends State<Property> {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Imóvel cadastrado com sucesso!")),
+        SnackBar(
+          content: Text(widget.propertyToEdit != null
+              ? "Imóvel atualizado com sucesso!"
+              : "Imóvel cadastrado com sucesso!"),
+        ),
       );
 
-      _formKey.currentState!.reset();
+      if (widget.propertyToEdit == null) {
+        _formKey.currentState!.reset();
 
-      nomeController.clear();
-      cepController.clear();
-      cidadeController.clear();
-      bairroController.clear();
-      ruaController.clear();
-      numeroController.clear();
-      complementoController.clear();
+        nomeController.clear();
+        cepController.clear();
+        cidadeController.clear();
+        bairroController.clear();
+        ruaController.clear();
+        numeroController.clear();
+        complementoController.clear();
 
-      setState(() {
-        estadoSelecionado = null;
-        imagem = null;
-        isActive = true;
-      });
+        setState(() {
+          estadoSelecionado = null;
+          imagem = null;
+          isActive = true;
+        });
+      } else {
+        Navigator.pop(context, true);
+      }
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Erro ao cadastrar imóvel")));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(widget.propertyToEdit != null
+              ? "Erro ao atualizar imóvel"
+              : "Erro ao cadastrar imóvel"),
+        ),
+      );
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:mobilia/domain/property.dart';
+import 'package:mobilia/domain/property.dart' as domain;
+import 'package:mobilia/pages/property.dart';
 import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/utils/utils.dart';
 
@@ -12,7 +13,7 @@ class PropertyList extends StatefulWidget {
 }
 
 class _PropertyListState extends State<PropertyList> {
-  List<Property> properties = [];
+  List<domain.Property> properties = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -35,7 +36,7 @@ class _PropertyListState extends State<PropertyList> {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          properties = data.map((e) => Property.fromJson(e)).toList();
+          properties = data.map((e) => domain.Property.fromJson(e)).toList();
           isLoading = false;
         });
       } else {
@@ -122,51 +123,99 @@ class _PropertyListState extends State<PropertyList> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
-            onTap: () {
-              // Pode adicionar navegação para detalhes aqui
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Property(propertyToEdit: property),
+                ),
+              );
+              if (result == true) {
+                _loadProperties();
+              }
             },
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          property.nome,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagem do imóvel
+                if (property.imagem != null && property.imagem!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                    child: Image.network(
+                      property.imagem!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: property.ativo
-                              ? Colors.green[100]
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          property.ativo ? "Ativo" : "Inativo",
-                          style: TextStyle(
-                            color: property.ativo
-                                ? Colors.green[800]
-                                : Colors.grey[700],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
                           ),
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              property.nome,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: property.ativo
+                                  ? Colors.green[100]
+                                  : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              property.ativo ? "Ativo" : "Inativo",
+                              style: TextStyle(
+                                color: property.ativo
+                                    ? Colors.green[800]
+                                    : Colors.grey[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -213,8 +262,10 @@ class _PropertyListState extends State<PropertyList> {
                       ],
                     ),
                   ],
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );

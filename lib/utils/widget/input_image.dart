@@ -7,6 +7,8 @@ class InputImage extends StatefulWidget {
   final bool multiple;
   final void Function(File?)? onChanged; // para single
   final void Function(List<File>)? onChangedMultiple; // para múltiplos
+  final String? initialImageUrl; // URL da imagem existente (para edição)
+  final List<String>? initialImageUrls; // URLs das imagens existentes (para múltiplas)
 
   const InputImage({
     super.key,
@@ -14,6 +16,8 @@ class InputImage extends StatefulWidget {
     this.multiple = false,
     this.onChanged,
     this.onChangedMultiple,
+    this.initialImageUrl,
+    this.initialImageUrls,
   });
 
   @override
@@ -24,11 +28,30 @@ class _InputImageState extends State<InputImage> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
   List<File> _images = [];
+  bool _hasInitialImage = false;
+  List<String> _initialImageUrls = []; // URLs das imagens iniciais (para múltiplas)
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.multiple) {
+      _initialImageUrls = widget.initialImageUrls ?? [];
+      _hasInitialImage = _initialImageUrls.isNotEmpty;
+      if (_hasInitialImage) {
+        print('DEBUG InputImage - initialImageUrls: ${widget.initialImageUrls}');
+      }
+    } else {
+      _hasInitialImage = widget.initialImageUrl?.isNotEmpty ?? false;
+      if (_hasInitialImage) {
+        print('DEBUG InputImage - initialImageUrl: ${widget.initialImageUrl}');
+      }
+    }
+  }
 
   Future<void> _pickImage() async {
     if (widget.multiple) {
       final pickedFiles = await _picker.pickMultiImage(imageQuality: 80);
-      if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
           _images.addAll(pickedFiles.map((e) => File(e.path)));
         });
@@ -54,7 +77,16 @@ class _InputImageState extends State<InputImage> {
 
   void _removeImage(int index) {
     setState(() {
-      _images.removeAt(index);
+      // Se está removendo uma imagem inicial (URL), remove da lista de URLs
+      if (index < _initialImageUrls.length) {
+        _initialImageUrls.removeAt(index);
+        _hasInitialImage = _initialImageUrls.isNotEmpty || _images.isNotEmpty;
+        // Quando remove uma imagem inicial, marca como modificado
+        // Isso força o envio de uma lista vazia para remover a imagem no backend
+      } else {
+        // Remove uma imagem local (File)
+        _images.removeAt(index - _initialImageUrls.length);
+      }
     });
     if (widget.onChangedMultiple != null) {
       widget.onChangedMultiple!(_images);
@@ -84,7 +116,7 @@ class _InputImageState extends State<InputImage> {
               color: Colors.grey.shade100,
             ),
             child: widget.multiple
-                ? _images.isEmpty
+                ? (_images.isEmpty && _initialImageUrls.isEmpty)
                       ? const Center(
                           child: Icon(
                             Icons.add_photo_alternate,
@@ -94,9 +126,10 @@ class _InputImageState extends State<InputImage> {
                         )
                       : ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _images.length + 1,
+                          itemCount: _initialImageUrls.length + _images.length + 1,
                           itemBuilder: (context, index) {
-                            if (index == _images.length) {
+                            final totalImages = _initialImageUrls.length + _images.length;
+                            if (index == totalImages) {
                               return GestureDetector(
                                 onTap: _pickImage,
                                 child: Container(
@@ -113,6 +146,74 @@ class _InputImageState extends State<InputImage> {
                                 ),
                               );
                             }
+                            
+                            // Se é uma imagem inicial (URL)
+                            if (index < _initialImageUrls.length) {
+                              return Stack(
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    margin: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        _initialImageUrls[index],
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 100,
+                                            height: 100,
+                                            color: Colors.grey.shade300,
+                                            child: const Icon(
+                                              Icons.broken_image,
+                                              size: 30,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                        },
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            width: 100,
+                                            height: 100,
+                                            color: Colors.grey.shade300,
+                                            child: const Center(
+                                              child: CircularProgressIndicator(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: () => _removeImage(index),
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            
+                            // É uma imagem local (File)
+                            final fileIndex = index - _initialImageUrls.length;
                             return Stack(
                               children: [
                                 Container(
@@ -121,7 +222,7 @@ class _InputImageState extends State<InputImage> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
                                     image: DecorationImage(
-                                      image: FileImage(_images[index]),
+                                      image: FileImage(_images[fileIndex]),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -132,7 +233,7 @@ class _InputImageState extends State<InputImage> {
                                   child: GestureDetector(
                                     onTap: () => _removeImage(index),
                                     child: Container(
-                                      decoration: BoxDecoration(
+                                      decoration: const BoxDecoration(
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                       ),
@@ -148,7 +249,7 @@ class _InputImageState extends State<InputImage> {
                             );
                           },
                         )
-                : _selectedImage == null
+                : _selectedImage == null && !_hasInitialImage
                 ? const Center(
                     child: Icon(
                       Icons.add_a_photo,
@@ -156,13 +257,74 @@ class _InputImageState extends State<InputImage> {
                       color: Colors.grey,
                     ),
                   )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
+                : Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _selectedImage != null
+                            ? Image.file(
+                                _selectedImage!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 180,
+                              )
+                            : widget.initialImageUrl != null
+                                ? Image.network(
+                                    widget.initialImageUrl!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 180,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 180,
+                                        color: Colors.grey.shade300,
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        height: 180,
+                                        color: Colors.grey.shade300,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : const SizedBox.shrink(),
+                      ),
+                      if (_hasInitialImage && _selectedImage == null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _hasInitialImage = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
           ),
         ),

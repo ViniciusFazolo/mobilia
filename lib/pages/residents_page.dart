@@ -147,8 +147,16 @@ class _ResidentsPageState extends State<ResidentsPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
-            onTap: () {
-              // Pode adicionar navegação para detalhes aqui
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Resident(residentToEdit: resident),
+                ),
+              );
+              if (result == true) {
+                _loadResidents();
+              }
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(

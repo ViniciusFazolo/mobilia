@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:mobilia/domain/unit.dart';
+import 'package:mobilia/domain/unit.dart' as domain;
+import 'package:mobilia/pages/unit.dart';
 import 'package:mobilia/service/unit_service.dart';
 import 'package:mobilia/utils/utils.dart';
 
@@ -12,7 +13,7 @@ class UnitList extends StatefulWidget {
 }
 
 class _UnitListState extends State<UnitList> {
-  List<Unit> units = [];
+  List<domain.Unit> units = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -35,7 +36,7 @@ class _UnitListState extends State<UnitList> {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          units = data.map((e) => Unit.fromJson(e)).toList();
+          units = data.map((e) => domain.Unit.fromJson(e)).toList();
           isLoading = false;
         });
       } else {
@@ -122,51 +123,138 @@ class _UnitListState extends State<UnitList> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
-            onTap: () {
-              // Pode adicionar navegação para detalhes aqui
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Unit(unitToEdit: unit),
+                ),
+              );
+              if (result == true) {
+                _loadUnits();
+              }
             },
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          unit.identificacao,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagens da unidade (mostra a primeira se houver)
+                if (unit.imagensUrls != null && unit.imagensUrls!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          unit.imagensUrls!.first,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[300],
+                              child: const Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                        ),
+                        // Indicador de múltiplas imagens
+                        if (unit.imagensUrls!.length > 1)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.photo_library,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${unit.imagensUrls!.length}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: unit.ativo
-                              ? Colors.green[100]
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          unit.ativo ? "Ativo" : "Inativo",
-                          style: TextStyle(
-                            color: unit.ativo
-                                ? Colors.green[800]
-                                : Colors.grey[700],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              unit.identificacao,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: unit.ativo
+                                  ? Colors.green[100]
+                                  : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              unit.ativo ? "Ativo" : "Inativo",
+                              style: TextStyle(
+                                color: unit.ativo
+                                    ? Colors.green[800]
+                                    : Colors.grey[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   if (unit.imovel != null) ...[
                     const SizedBox(height: 8),
                     Row(
@@ -224,8 +312,10 @@ class _UnitListState extends State<UnitList> {
                       ],
                     ),
                   ],
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );
