@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
@@ -41,9 +40,7 @@ class RegisterController {
     String body = json.encode(data);
 
     try {
-      final url = Platform.isAndroid
-          ? "http://10.0.2.2:8080/auth/register"
-          : "https://aluguei-app-production.up.railway.app/auth/register";
+      final url = "https://aluguei-app-production.up.railway.app/auth/register";
 
       final response = await http.post(
         Uri.parse(url),

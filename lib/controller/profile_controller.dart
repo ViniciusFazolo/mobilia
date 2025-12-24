@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:mobilia/domain/user.dart';
@@ -37,9 +36,7 @@ class ProfileController {
         return;
       }
 
-      final url = Platform.isAndroid
-          ? "http://10.0.2.2:8080/api/user/$userId"
-          : "https://aluguei-app-production.up.railway.app/api/user/$userId";
+      final url = "https://aluguei-app-production.up.railway.app/api/user/$userId";
       
       final token = await Prefs.getString("token");
       final response = await http.get(
@@ -129,9 +126,7 @@ class ProfileController {
       String body = json.encode(data);
 
       // CORREÇÃO: URL correta para atualizar usuário
-      final url = Platform.isAndroid
-          ? "http://10.0.2.2:8080/api/user/$userId"
-          : "https://aluguei-app-production.up.railway.app/api/user/$userId";
+      final url = "https://aluguei-app-production.up.railway.app/api/user/$userId";
 
       final token = await Prefs.getString("token");
       final response = await http.put(
