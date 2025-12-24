@@ -39,7 +39,7 @@ class ProfileController {
 
       final url = Platform.isAndroid
           ? "http://10.0.2.2:8080/api/user/$userId"
-          : 'http://localhost:8080/api/user/$userId';
+          : "https://aluguei-app-production.up.railway.app/api/user/$userId";
       
       final token = await Prefs.getString("token");
       final response = await http.get(
@@ -131,7 +131,7 @@ class ProfileController {
       // CORREÇÃO: URL correta para atualizar usuário
       final url = Platform.isAndroid
           ? "http://10.0.2.2:8080/api/user/$userId"
-          : 'http://localhost:8080/api/user/$userId';
+          : "https://aluguei-app-production.up.railway.app/api/user/$userId";
 
       final token = await Prefs.getString("token");
       final response = await http.put(

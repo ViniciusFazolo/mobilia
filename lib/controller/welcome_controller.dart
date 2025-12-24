@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobilia/pages/login.dart';
@@ -16,8 +16,12 @@ class WelcomeController {
     String body = json.encode(data);
 
     try {
+      final url = Platform.isAndroid
+          ? "http://10.0.2.2:8080/auth/login"
+          : "https://aluguei-app-production.up.railway.app/auth/login";
+      
       final response = await http.post(
-        Uri.parse('http://localhost:8080/auth/login'),
+        Uri.parse(url),
         body: body,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',

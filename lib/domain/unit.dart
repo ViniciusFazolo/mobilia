@@ -87,7 +87,9 @@ class Unit {
             // Se a URL não começa com http, adiciona o baseUrl
             if (!url.startsWith('http')) {
               final cleanUrl = url.startsWith('/') ? url.substring(1) : url;
-              final baseUrl = Platform.isAndroid ? "http://10.0.2.2:8080" : 'http://localhost:8080';
+              final baseUrl = Platform.isAndroid 
+                  ? "http://10.0.2.2:8080" 
+                  : "https://aluguei-app-production.up.railway.app";
               final finalUrl = '$baseUrl/$cleanUrl';
               print('DEBUG _parseImagensUrls - URL relativa convertida: "$finalUrl"');
               return finalUrl;
@@ -110,7 +112,7 @@ class Unit {
       if (url.isNotEmpty && url.toLowerCase() != 'null') {
         if (!url.startsWith('http')) {
           final cleanUrl = url.startsWith('/') ? url.substring(1) : url;
-          final baseUrl = Platform.isAndroid ? "http://10.0.2.2:8080" : 'http://localhost:8080';
+          final baseUrl = "https://aluguei-app-production.up.railway.app";
           final finalUrl = '$baseUrl/$cleanUrl';
           print('DEBUG _parseImagensUrls - String convertida para lista: [$finalUrl]');
           return [finalUrl];

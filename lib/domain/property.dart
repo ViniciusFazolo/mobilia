@@ -90,7 +90,9 @@ class Property {
       // Se a URL não começa com http, adiciona o baseUrl
       if (!urlValue.startsWith('http')) {
         final cleanUrl = urlValue.startsWith('/') ? urlValue.substring(1) : urlValue;
-        final baseUrl = Platform.isAndroid ? "http://10.0.2.2:8080" : 'http://localhost:8080';
+        final baseUrl = Platform.isAndroid 
+            ? "http://10.0.2.2:8080" 
+            : "https://aluguei-app-production.up.railway.app";
         imagemValue = '$baseUrl/$cleanUrl';
       } else {
         imagemValue = urlValue;

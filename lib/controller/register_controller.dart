@@ -43,7 +43,7 @@ class RegisterController {
     try {
       final url = Platform.isAndroid
           ? "http://10.0.2.2:8080/auth/register"
-          : 'http://localhost:8080/auth/register';
+          : "https://aluguei-app-production.up.railway.app/auth/register";
 
       final response = await http.post(
         Uri.parse(url),

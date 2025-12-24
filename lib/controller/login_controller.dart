@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:mobilia/utils/prefs.dart';
@@ -18,7 +17,7 @@ class LoginController {
     try {
       final url = Platform.isAndroid
           ? "http://10.0.2.2:8080/auth/login"
-          : 'http://localhost:8080/auth/login';
+          : "https://aluguei-app-production.up.railway.app/auth/login";
 
       final response = await http.post(
         Uri.parse(url),
