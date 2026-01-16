@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobilia/domain/property.dart';
 import 'package:mobilia/domain/unit.dart';
 import 'package:mobilia/service/property_service.dart';
@@ -38,7 +38,7 @@ class UnitController {
   final qtdSuiteController = TextEditingController();
   String statusSelecionado = "";
   int imovelSelecionado = 0;
-  List<File> imagens = [];
+  List<XFile> imagensSelecionadas = [];
   bool imagensModificadas = false; // Flag para saber se as imagens foram modificadas
 
   Future<bool> submitForm(BuildContext context, VoidCallback refresh) async {
@@ -55,15 +55,28 @@ class UnitController {
     debugPrint('imovelSelecionado: $imovelSelecionado');
 
     try {
+      // Lista de bytes para enviar ao serviço
+      List<Map<String, dynamic>>? imagensBytes;
+      
       // Se está editando e não há novas imagens selecionadas, não envia imagens
       // Isso preserva as imagens existentes no backend
-      final imagensParaEnviar = editingId != null && imagens.isEmpty 
-          ? null 
-          : (imagens.isNotEmpty ? imagens : null);
+      if (editingId != null && imagensSelecionadas.isEmpty) {
+        imagensBytes = null;
+      } else if (imagensSelecionadas.isNotEmpty) {
+        // Lê os bytes de cada XFile
+        imagensBytes = [];
+        for (var xFile in imagensSelecionadas) {
+          final bytes = await xFile.readAsBytes();
+          imagensBytes.add({
+            'bytes': bytes,
+            'fileName': xFile.name,
+          });
+        }
+      }
       
       debugPrint('DEBUG submitForm - editingId: $editingId');
-      debugPrint('DEBUG submitForm - imagens.length: ${imagens.length}');
-      debugPrint('DEBUG submitForm - imagensParaEnviar: ${imagensParaEnviar?.length ?? "null"}');
+      debugPrint('DEBUG submitForm - imagensSelecionadas.length: ${imagensSelecionadas.length}');
+      debugPrint('DEBUG submitForm - imagensBytes: ${imagensBytes?.length ?? "null"}');
       
       final response = editingId != null
           ? await service.updateUnit(
@@ -82,7 +95,7 @@ class UnitController {
               qtdBanheiro: qtdBanheiroController.text,
               qtdSuite: qtdSuiteController.text,
               qtdGaragem: qtdGaragemController.text,
-              imagens: imagensParaEnviar,
+              imagensBytes: imagensBytes,
               imovel: imovelSelecionado,
               status: statusSelecionado.isNotEmpty ? statusSelecionado : 'VAZIA',
             )
@@ -101,7 +114,7 @@ class UnitController {
               qtdBanheiro: qtdBanheiroController.text,
               qtdSuite: qtdSuiteController.text,
               qtdGaragem: qtdGaragemController.text,
-              imagens: imagens,
+              imagensBytes: imagensBytes,
               imovel: imovelSelecionado,
               status: statusSelecionado.isNotEmpty ? statusSelecionado : 'VAZIA',
             );
@@ -200,10 +213,10 @@ class UnitController {
       debugPrint('Status vazio, definindo como string vazia');
     }
     debugPrint('statusSelecionado final: "$statusSelecionado"');
-    imagens = unit.imagens; // Files locais (vazio ao carregar)
+    imagensSelecionadas = []; // XFiles locais (vazio ao carregar)
     imagensModificadas = false; // Reseta a flag ao carregar para edição
     debugPrint('DEBUG loadForEdit - unit.imagensUrls: ${unit.imagensUrls}');
-    debugPrint('DEBUG loadForEdit - unit.imagens (Files): ${unit.imagens.length} arquivos');
+    debugPrint('DEBUG loadForEdit - unit.imagensUrls.length: ${unit.imagensUrls?.length ?? 0} arquivos');
   }
 
   Future<void> fetchProperty(BuildContext context, VoidCallback refresh) async {

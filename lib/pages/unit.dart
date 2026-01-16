@@ -160,10 +160,9 @@ class _UnitState extends State<Unit> {
                 label: "Imagens do imóvel",
                 multiple: true,
                 initialImageUrls: imageUrls,
-                onChangedMultiple: (files) {
+                onChangedMultipleXFile: (xFiles) {
                   setState(() {
-                    debugPrint(files.map((f) => f.path).join(', '));
-                    unitController.imagens = files;
+                    unitController.imagensSelecionadas = xFiles;
                     unitController.imagensModificadas = true; // Marca que as imagens foram modificadas
                   });
                 },

@@ -1,6 +1,6 @@
 // lib/services/property_service.dart
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:mobilia/service/crud_service.dart';
 import 'package:mobilia/utils/prefs.dart';
 
@@ -18,7 +18,7 @@ class PropertyService extends CrudService {
     required String rua,
     String? numero,
     String? complemento,
-    List<File>? imagens,
+    List<Map<String, dynamic>>? imagensBytes,
   }) async {
     final uri = Uri.parse('$baseUrl/imovel');
     final request = http.MultipartRequest('POST', uri);
@@ -41,17 +41,19 @@ class PropertyService extends CrudService {
     if (complemento != null) request.fields['complemento'] = complemento;
 
     // Adiciona imagens, se houver
-    if (imagens != null) {
-      for (var i = 0; i < imagens.length; i++) {
-        final file = imagens[i];
-        final stream = http.ByteStream(file.openRead());
-        final length = await file.length();
-
-        final multipartFile = http.MultipartFile(
+    if (imagensBytes != null && imagensBytes.isNotEmpty) {
+      for (var imageData in imagensBytes) {
+        final bytes = imageData['bytes'] as List<int>;
+        final fileName = imageData['fileName'] as String? ?? 'upload.jpg';
+        
+        // Determina o content type baseado na extensão do arquivo
+        final contentType = _getContentType(fileName);
+        
+        final multipartFile = http.MultipartFile.fromBytes(
           'imagens',
-          stream,
-          length,
-          filename: file.path.split('/').last,
+          bytes,
+          filename: fileName,
+          contentType: contentType,
         );
 
         request.files.add(multipartFile);
@@ -73,7 +75,7 @@ class PropertyService extends CrudService {
     required String rua,
     String? numero,
     String? complemento,
-    List<File>? imagens,
+    List<Map<String, dynamic>>? imagensBytes,
   }) async {
     final uri = Uri.parse('$baseUrl/imovel/$id');
     final request = http.MultipartRequest('PUT', uri);
@@ -96,17 +98,19 @@ class PropertyService extends CrudService {
     if (complemento != null) request.fields['complemento'] = complemento;
 
     // Adiciona imagens, se houver
-    if (imagens != null) {
-      for (var i = 0; i < imagens.length; i++) {
-        final file = imagens[i];
-        final stream = http.ByteStream(file.openRead());
-        final length = await file.length();
-
-        final multipartFile = http.MultipartFile(
+    if (imagensBytes != null && imagensBytes.isNotEmpty) {
+      for (var imageData in imagensBytes) {
+        final bytes = imageData['bytes'] as List<int>;
+        final fileName = imageData['fileName'] as String? ?? 'upload.jpg';
+        
+        // Determina o content type baseado na extensão do arquivo
+        final contentType = _getContentType(fileName);
+        
+        final multipartFile = http.MultipartFile.fromBytes(
           'imagens',
-          stream,
-          length,
-          filename: file.path.split('/').last,
+          bytes,
+          filename: fileName,
+          contentType: contentType,
         );
 
         request.files.add(multipartFile);
@@ -114,5 +118,23 @@ class PropertyService extends CrudService {
     }
 
     return await request.send();
+  }
+
+  /// Determina o content type baseado na extensão do arquivo
+  MediaType _getContentType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return MediaType('image', 'jpeg');
+      case 'png':
+        return MediaType('image', 'png');
+      case 'gif':
+        return MediaType('image', 'gif');
+      case 'webp':
+        return MediaType('image', 'webp');
+      default:
+        return MediaType('image', 'jpeg');
+    }
   }
 }

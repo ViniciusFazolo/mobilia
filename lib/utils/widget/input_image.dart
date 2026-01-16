@@ -1,12 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class InputImage extends StatefulWidget {
   final String? label;
   final bool multiple;
-  final void Function(File?)? onChanged; // para single
-  final void Function(List<File>)? onChangedMultiple; // para múltiplos
+  final void Function(File?)? onChanged; // para single (mantido para compatibilidade)
+  final void Function(List<File>)? onChangedMultiple; // para múltiplos (mantido para compatibilidade)
+  final void Function(XFile?)? onChangedXFile; // para single com XFile (web-compatible)
+  final void Function(List<XFile>)? onChangedMultipleXFile; // para múltiplos com XFile (web-compatible)
   final String? initialImageUrl; // URL da imagem existente (para edição)
   final List<String>? initialImageUrls; // URLs das imagens existentes (para múltiplas)
 
@@ -16,6 +19,8 @@ class InputImage extends StatefulWidget {
     this.multiple = false,
     this.onChanged,
     this.onChangedMultiple,
+    this.onChangedXFile,
+    this.onChangedMultipleXFile,
     this.initialImageUrl,
     this.initialImageUrls,
   });
@@ -26,8 +31,10 @@ class InputImage extends StatefulWidget {
 
 class _InputImageState extends State<InputImage> {
   final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
-  List<File> _images = [];
+  XFile? _selectedXFile; // Armazena XFile (funciona na web)
+  File? _selectedImage; // Mantido para compatibilidade (pode ser null na web)
+  List<XFile> _xFiles = []; // Armazena XFiles (funciona na web)
+  List<File> _images = []; // Mantido para compatibilidade (pode ser vazio na web)
   bool _hasInitialImage = false;
   List<String> _initialImageUrls = []; // URLs das imagens iniciais (para múltiplas)
 
@@ -53,9 +60,20 @@ class _InputImageState extends State<InputImage> {
       final pickedFiles = await _picker.pickMultiImage(imageQuality: 80);
       if (pickedFiles.isNotEmpty) {
         setState(() {
-          _images.addAll(pickedFiles.map((e) => File(e.path)));
+          _xFiles.addAll(pickedFiles);
+          // Tenta converter XFile para File apenas se possível (mobile)
+          // Na web, isso pode falhar, então não armazenamos File
+          try {
+            _images.addAll(pickedFiles.map((e) => File(e.path)));
+          } catch (e) {
+            // Na web, File não funciona, mas não é problema
+            // Mantemos apenas os XFiles
+          }
         });
-        if (widget.onChangedMultiple != null) {
+        // Prioriza callback com XFile (web-compatible)
+        if (widget.onChangedMultipleXFile != null) {
+          widget.onChangedMultipleXFile!(_xFiles);
+        } else if (widget.onChangedMultiple != null) {
           widget.onChangedMultiple!(_images);
         }
       }
@@ -66,9 +84,21 @@ class _InputImageState extends State<InputImage> {
       );
       if (picked != null) {
         setState(() {
-          _selectedImage = File(picked.path);
+          _selectedXFile = picked;
+          // Tenta converter XFile para File apenas se possível (mobile)
+          // Na web, isso pode falhar, então não armazenamos File
+          try {
+            _selectedImage = File(picked.path);
+          } catch (e) {
+            // Na web, File não funciona, mas não é problema
+            // Mantemos apenas o XFile
+            _selectedImage = null;
+          }
         });
-        if (widget.onChanged != null) {
+        // Prioriza callback com XFile (web-compatible)
+        if (widget.onChangedXFile != null) {
+          widget.onChangedXFile!(_selectedXFile);
+        } else if (widget.onChanged != null) {
           widget.onChanged!(_selectedImage);
         }
       }
@@ -80,15 +110,22 @@ class _InputImageState extends State<InputImage> {
       // Se está removendo uma imagem inicial (URL), remove da lista de URLs
       if (index < _initialImageUrls.length) {
         _initialImageUrls.removeAt(index);
-        _hasInitialImage = _initialImageUrls.isNotEmpty || _images.isNotEmpty;
+        _hasInitialImage = _initialImageUrls.isNotEmpty || _xFiles.isNotEmpty;
         // Quando remove uma imagem inicial, marca como modificado
         // Isso força o envio de uma lista vazia para remover a imagem no backend
       } else {
-        // Remove uma imagem local (File)
-        _images.removeAt(index - _initialImageUrls.length);
+        // Remove uma imagem local (XFile)
+        final fileIndex = index - _initialImageUrls.length;
+        _xFiles.removeAt(fileIndex);
+        if (fileIndex < _images.length) {
+          _images.removeAt(fileIndex);
+        }
       }
     });
-    if (widget.onChangedMultiple != null) {
+    // Prioriza callback com XFile (web-compatible)
+    if (widget.onChangedMultipleXFile != null) {
+      widget.onChangedMultipleXFile!(_xFiles);
+    } else if (widget.onChangedMultiple != null) {
       widget.onChangedMultiple!(_images);
     }
   }
@@ -116,7 +153,7 @@ class _InputImageState extends State<InputImage> {
               color: Colors.grey.shade100,
             ),
             child: widget.multiple
-                ? (_images.isEmpty && _initialImageUrls.isEmpty)
+                ? (_xFiles.isEmpty && _initialImageUrls.isEmpty)
                       ? const Center(
                           child: Icon(
                             Icons.add_photo_alternate,
@@ -126,9 +163,9 @@ class _InputImageState extends State<InputImage> {
                         )
                       : ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _initialImageUrls.length + _images.length + 1,
+                          itemCount: _initialImageUrls.length + _xFiles.length + 1,
                           itemBuilder: (context, index) {
-                            final totalImages = _initialImageUrls.length + _images.length;
+                            final totalImages = _initialImageUrls.length + _xFiles.length;
                             if (index == totalImages) {
                               return GestureDetector(
                                 onTap: _pickImage,
@@ -212,7 +249,7 @@ class _InputImageState extends State<InputImage> {
                               );
                             }
                             
-                            // É uma imagem local (File)
+                            // É uma imagem local (XFile)
                             final fileIndex = index - _initialImageUrls.length;
                             return Stack(
                               children: [
@@ -221,10 +258,54 @@ class _InputImageState extends State<InputImage> {
                                   margin: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    image: DecorationImage(
-                                      image: FileImage(_images[fileIndex]),
-                                      fit: BoxFit.cover,
-                                    ),
+                                  ),
+                                  child: FutureBuilder<Uint8List>(
+                                    future: _xFiles[fileIndex].readAsBytes(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return Container(
+                                          width: 100,
+                                          height: 100,
+                                          color: Colors.grey.shade300,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      }
+                                      if (snapshot.hasData) {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.memory(
+                                            snapshot.data!,
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      }
+                                      // Fallback: tenta usar File se disponível
+                                      if (fileIndex < _images.length) {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            _images[fileIndex],
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      }
+                                      return Container(
+                                        width: 100,
+                                        height: 100,
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(
+                                          Icons.broken_image,
+                                          size: 30,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                                 Positioned(
@@ -249,7 +330,7 @@ class _InputImageState extends State<InputImage> {
                             );
                           },
                         )
-                : _selectedImage == null && !_hasInitialImage
+                : _selectedXFile == null && !_hasInitialImage
                 ? const Center(
                     child: Icon(
                       Icons.add_a_photo,
@@ -261,12 +342,38 @@ class _InputImageState extends State<InputImage> {
                     children: [
                       ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                        child: _selectedImage != null
-                            ? Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                                height: 180,
+                        child: _selectedXFile != null
+                            ? FutureBuilder<Uint8List>(
+                                future: _selectedXFile!.readAsBytes(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return Container(
+                                      height: 180,
+                                      color: Colors.grey.shade300,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  }
+                                  if (snapshot.hasData) {
+                                    return Image.memory(
+                                      snapshot.data!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: 180,
+                                    );
+                                  }
+                                  // Fallback: tenta usar File se disponível
+                                  if (_selectedImage != null) {
+                                    return Image.file(
+                                      _selectedImage!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: 180,
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
                               )
                             : widget.initialImageUrl != null
                                 ? Image.network(
@@ -300,7 +407,7 @@ class _InputImageState extends State<InputImage> {
                                   )
                                 : const SizedBox.shrink(),
                       ),
-                      if (_hasInitialImage && _selectedImage == null)
+                      if (_hasInitialImage && _selectedXFile == null)
                         Positioned(
                           top: 8,
                           right: 8,

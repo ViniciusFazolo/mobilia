@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mobilia/service/crud_service.dart';
 import 'package:mobilia/utils/prefs.dart';
 import 'package:http/http.dart' as http;
@@ -26,6 +27,13 @@ class ContractService extends CrudService {
         headers["Authorization"] = "Bearer $token";
       }
 
+      // Na web, retorna a URL (o token será enviado via header quando necessário)
+      // Para visualização, vamos fazer uma requisição com token e criar blob URL
+      if (kIsWeb) {
+        return url.toString();
+      }
+
+      // Em mobile, baixa o arquivo e retorna o caminho
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -45,6 +53,9 @@ class ContractService extends CrudService {
   }
 
   Future<bool> _requestStoragePermission() async {
+    if (kIsWeb) {
+      return false; // Web não precisa de permissão de armazenamento
+    }
     if (Platform.isAndroid) {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
@@ -70,6 +81,24 @@ class ContractService extends CrudService {
 
   Future<String> downloadPdfToDevice(int contratoId) async {
     try {
+      // Na web, faz o download via fetch com token e cria blob URL
+      if (kIsWeb) {
+        final url = Uri.parse('$apiBaseUrl/contrato/$contratoId/download');
+        final token = await Prefs.getString("token");
+        
+        // Na web, precisamos fazer a requisição com o token e criar um blob URL
+        // Isso será feito no frontend usando JavaScript
+        // Retornamos a URL com o token como query parameter temporariamente
+        // (Idealmente, o backend deveria aceitar token via query param ou usar cookies)
+        if (token.isNotEmpty) {
+          final uriWithToken = url.replace(queryParameters: {
+            'token': token,
+          });
+          return uriWithToken.toString();
+        }
+        return url.toString();
+      }
+
       // Solicita permissão
       final hasPermission = await _requestStoragePermission();
       if (!hasPermission) {

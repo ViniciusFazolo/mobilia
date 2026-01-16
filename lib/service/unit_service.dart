@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobilia/service/crud_service.dart';
 import 'package:mobilia/utils/prefs.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class UnitService extends CrudService {
   UnitService({required super.baseUrl});
@@ -22,7 +22,7 @@ class UnitService extends CrudService {
     String? qtdBanheiro,
     String? qtdSuite,
     String? qtdGaragem,
-    List<File>? imagens,
+    List<Map<String, dynamic>>? imagensBytes,
     required int imovel,
     required String status,
   }) async {
@@ -57,17 +57,19 @@ class UnitService extends CrudService {
 
     debugPrint(request.fields['status']);
     // Adiciona imagens, se houver
-    if (imagens != null) {
-      for (var i = 0; i < imagens.length; i++) {
-        final file = imagens[i];
-        final stream = http.ByteStream(file.openRead());
-        final length = await file.length();
-
-        final multipartFile = http.MultipartFile(
+    if (imagensBytes != null && imagensBytes.isNotEmpty) {
+      for (var imageData in imagensBytes) {
+        final bytes = imageData['bytes'] as List<int>;
+        final fileName = imageData['fileName'] as String? ?? 'upload.jpg';
+        
+        // Determina o content type baseado na extensão do arquivo
+        final contentType = _getContentType(fileName);
+        
+        final multipartFile = http.MultipartFile.fromBytes(
           'imagens',
-          stream,
-          length,
-          filename: file.path.split('/').last,
+          bytes,
+          filename: fileName,
+          contentType: contentType,
         );
 
         request.files.add(multipartFile);
@@ -93,7 +95,7 @@ class UnitService extends CrudService {
     String? qtdBanheiro,
     String? qtdSuite,
     String? qtdGaragem,
-    List<File>? imagens,
+    List<Map<String, dynamic>>? imagensBytes,
     required int imovel,
     required String status,
   }) async {
@@ -125,17 +127,19 @@ class UnitService extends CrudService {
     if (qtdGaragem != null) request.fields['qtdGaragem'] = qtdGaragem;
 
     // Adiciona imagens, se houver
-    if (imagens != null) {
-      for (var i = 0; i < imagens.length; i++) {
-        final file = imagens[i];
-        final stream = http.ByteStream(file.openRead());
-        final length = await file.length();
-
-        final multipartFile = http.MultipartFile(
+    if (imagensBytes != null && imagensBytes.isNotEmpty) {
+      for (var imageData in imagensBytes) {
+        final bytes = imageData['bytes'] as List<int>;
+        final fileName = imageData['fileName'] as String? ?? 'upload.jpg';
+        
+        // Determina o content type baseado na extensão do arquivo
+        final contentType = _getContentType(fileName);
+        
+        final multipartFile = http.MultipartFile.fromBytes(
           'imagens',
-          stream,
-          length,
-          filename: file.path.split('/').last,
+          bytes,
+          filename: fileName,
+          contentType: contentType,
         );
 
         request.files.add(multipartFile);
@@ -143,5 +147,23 @@ class UnitService extends CrudService {
     }
 
     return await request.send();
+  }
+
+  /// Determina o content type baseado na extensão do arquivo
+  MediaType _getContentType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return MediaType('image', 'jpeg');
+      case 'png':
+        return MediaType('image', 'png');
+      case 'gif':
+        return MediaType('image', 'gif');
+      case 'webp':
+        return MediaType('image', 'webp');
+      default:
+        return MediaType('image', 'jpeg');
+    }
   }
 }

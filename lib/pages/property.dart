@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobilia/domain/property.dart' as domain;
 import 'package:mobilia/service/property_service.dart';
 import 'package:mobilia/utils/estados.dart';
@@ -24,7 +23,7 @@ class _PropertyState extends State<Property> {
   final _formKey = GlobalKey<FormState>();
   bool isActive = true;
   String? estadoSelecionado;
-  File? imagem;
+  XFile? imagemSelecionada;
   final nomeController = TextEditingController();
   final cepController = TextEditingController();
   final estadoController = TextEditingController();
@@ -146,9 +145,9 @@ class _PropertyState extends State<Property> {
                 label: "Imagem do imóvel",
                 multiple: false,
                 initialImageUrl: imageUrl,
-                onChanged: (file) {
+                onChangedXFile: (xFile) {
                   setState(() {
-                    imagem = file;
+                    imagemSelecionada = xFile;
                   });
                 },
               );
@@ -195,68 +194,97 @@ class _PropertyState extends State<Property> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final service = PropertyService(baseUrl: apiBaseUrl);
-
-    final imagens = imagem != null ? [imagem!] : <File>[];
-
     setState(() {
       isLoading = true;
     });
 
-    final response = widget.propertyToEdit != null && widget.propertyToEdit!.id != null
-        ? await service.updateProperty(
-            id: widget.propertyToEdit!.id!,
-            ativo: isActive,
-            nome: nomeController.text,
-            cep: cepController.text,
-            estado: estadoSelecionado ?? '',
-            cidade: cidadeController.text,
-            bairro: bairroController.text,
-            rua: ruaController.text,
-            numero: numeroController.text,
-            complemento: complementoController.text,
-            imagens: imagens,
-          )
-        : await service.createProperty(
-            ativo: isActive,
-            nome: nomeController.text,
-            cep: cepController.text,
-            estado: estadoSelecionado ?? '',
-            cidade: cidadeController.text,
-            bairro: bairroController.text,
-            rua: ruaController.text,
-            numero: numeroController.text,
-            complemento: complementoController.text,
-            imagens: imagens,
+    try {
+      // Lista de bytes para enviar ao serviço
+      List<Map<String, dynamic>>? imagensBytes;
+      
+      if (imagemSelecionada != null) {
+        // FORMA CORRETA PARA WEB: ler bytes em vez de usar path
+        final bytes = await imagemSelecionada!.readAsBytes();
+        imagensBytes = [
+          {
+            'bytes': bytes,
+            'fileName': imagemSelecionada!.name,
+          }
+        ];
+      }
+
+      final service = PropertyService(baseUrl: apiBaseUrl);
+
+      final response = widget.propertyToEdit != null && widget.propertyToEdit!.id != null
+          ? await service.updateProperty(
+              id: widget.propertyToEdit!.id!,
+              ativo: isActive,
+              nome: nomeController.text,
+              cep: cepController.text,
+              estado: estadoSelecionado ?? '',
+              cidade: cidadeController.text,
+              bairro: bairroController.text,
+              rua: ruaController.text,
+              numero: numeroController.text,
+              complemento: complementoController.text,
+              imagensBytes: imagensBytes,
+            )
+          : await service.createProperty(
+              ativo: isActive,
+              nome: nomeController.text,
+              cep: cepController.text,
+              estado: estadoSelecionado ?? '',
+              cidade: cidadeController.text,
+              bairro: bairroController.text,
+              rua: ruaController.text,
+              numero: numeroController.text,
+              complemento: complementoController.text,
+              imagensBytes: imagensBytes,
+            );
+
+      setState(() {
+        isLoading = false;
+      });
+
+      final statusCode = response.statusCode;
+
+      if (statusCode == 200 || statusCode == 201) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.propertyToEdit != null
+                  ? "Imóvel atualizado com sucesso!"
+                  : "Imóvel cadastrado com sucesso!"),
+            ),
           );
 
-    setState(() {
-      isLoading = false;
-    });
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.propertyToEdit != null
-              ? "Imóvel atualizado com sucesso!"
-              : "Imóvel cadastrado com sucesso!"),
-        ),
-      );
-
-      // Volta para a listagem após salvar (tanto para cadastro quanto edição)
-      if (context.mounted) {
-        Navigator.pop(context, true);
+          // Volta para a listagem após salvar (tanto para cadastro quanto edição)
+          Navigator.pop(context, true);
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.propertyToEdit != null
+                  ? "Erro ao atualizar imóvel"
+                  : "Erro ao cadastrar imóvel"),
+            ),
+          );
+        }
       }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-        SnackBar(
-          content: Text(widget.propertyToEdit != null
-              ? "Erro ao atualizar imóvel"
-              : "Erro ao cadastrar imóvel"),
-        ),
-      );
+    } catch (e) {
+      print("ERRO NO SUBMIT: $e");
+      if (context.mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erro ao salvar imóvel: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
